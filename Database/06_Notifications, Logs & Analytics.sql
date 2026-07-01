@@ -18,10 +18,9 @@ CREATE TABLE notifications (
     read_at TIMESTAMPTZ
 );
 
--- Notification Indexes (Critical for the Unread Inbox & Auto-Delete)
+-- Notification Indexes
 CREATE INDEX idx_notif_user_read ON notifications USING BTREE (recipient_id, is_read, sent_at);
 CREATE INDEX idx_notif_sent ON notifications USING BTREE (sent_at);
-
 
 -- 2. Create the Activity Logs Table (Audit Trail)
 CREATE TABLE activity_logs (
@@ -44,7 +43,7 @@ CREATE TABLE activity_logs (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Activity Log Indexes (Critical for User History & Auto-Delete)
+-- Activity Log Indexes
 CREATE INDEX idx_logs_actor ON activity_logs USING BTREE (actor_id, created_at);
 CREATE INDEX idx_logs_resource ON activity_logs USING BTREE (resource_id, resource_type);
 CREATE INDEX idx_logs_created ON activity_logs USING BTREE (created_at);

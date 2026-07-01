@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UrbanCare – Community Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080808;
+      --card-bg: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.09);
+      --border-focus: rgba(255,255,255,0.45);
+      --text: #ffffff;
+      --text-secondary: #a0a0a0;
+      --text-muted: #555555;
+      --input-bg: rgba(255,255,255,0.05);
+      --green: #4ade80;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --blue: #60a5fa;
+    }
+
+    html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); overflow: hidden; }
+
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px), linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+      background-size: 48px 48px; pointer-events: none; z-index: 0;
+    }
+
+    .blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
+    .blob-1 { width:600px;height:600px;background:radial-gradient(circle,rgba(255,255,255,.055) 0%,transparent 65%);top:-200px;left:-180px;animation:bf1 10s ease-in-out infinite; }
+    .blob-2 { width:460px;height:460px;background:radial-gradient(circle,rgba(200,200,200,.04) 0%,transparent 65%);bottom:-120px;right:-120px;animation:bf2 13s ease-in-out infinite; }
+    .blob-3 { width:300px;height:300px;background:radial-gradient(circle,rgba(255,255,255,.03) 0%,transparent 65%);top:40%;left:60%;animation:bf1 15s ease-in-out infinite reverse; }
+    @keyframes bf1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-25px) scale(1.04)} 66%{transform:translate(-20px,28px) scale(.97)} }
+    @keyframes bf2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-26px,-30px) scale(1.06)} }
+
+    /* ── Screen system ── */
+    #app { position:relative;z-index:1;width:100%;height:100%;overflow:hidden; }
+    .screen {
+      position:absolute;inset:0;overflow-y:auto;
+      display:flex;align-items:flex-start;justify-content:center;
+      padding:24px 20px 40px;
+      opacity:0;transform:translateY(28px) scale(.97);
+      transition:opacity .45s cubic-bezier(.16,1,.3,1),transform .45s cubic-bezier(.16,1,.3,1);
+      pointer-events:none;
+    }
+    .screen.active { opacity:1;transform:none;pointer-events:auto; }
+    .screen.exit { opacity:0;transform:translateY(-20px) scale(.97); }
+    .screen-center { align-items:center; }
+
+    /* ── Card ── */
+    .card {
+      background:var(--card-bg);border:1px solid var(--border);border-radius:24px;
+      padding:44px;width:100%;max-width:420px;backdrop-filter:blur(28px);
+      box-shadow:0 40px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.07);
+    }
+
+    /* ── Badge ── */
+    .badge { display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:500;color:#c0c0c0;margin-bottom:18px;letter-spacing:.3px; }
+    .badge-dot { width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 2.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.75)} }
+
+    /* ── Logo ── */
+    .logo-row { display:flex;align-items:center;gap:13px;margin-bottom:8px; }
+    .logo-icon { width:44px;height:44px;border-radius:13px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 20px rgba(255,255,255,.15); }
+    .logo-text { font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#fff;letter-spacing:-.5px; }
+    .tagline { font-size:14px;color:var(--text-secondary);line-height:1.55;margin-bottom:30px; }
+
+    /* ── Inputs ── */
+    .input-wrap { position:relative;margin-bottom:14px; }
+    /* Only target the FIRST svg (left icon), not the eye-button svg */
+    .input-wrap > svg:first-of-type { position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;transition:color .2s; }
+    .input-wrap:focus-within > svg:first-of-type { color:#fff; }
+    input[type=text],input[type=email],input[type=password],input[type=tel],select,textarea {
+      width:100%;padding:14px 16px 14px 46px;background:var(--input-bg);border:1px solid var(--border);
+      border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;color:#fff;outline:none;
+      transition:all .25s;-webkit-appearance:none;appearance:none;
+    }
+    /* Extra right padding when there's an eye toggle button */
+    .input-wrap.has-eye input { padding-right: 46px; }
+    input::placeholder,textarea::placeholder { color:var(--text-muted); }
+    input:focus,select:focus,textarea:focus { background:rgba(255,255,255,.08);border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(255,255,255,.06); }
+    select { padding-left:16px;cursor:pointer; }
+    select option { background:#111; }
+    textarea { padding:14px 16px;resize:none;min-height:100px; }
+    .input-right {
+      position:absolute;right:14px;top:50%;transform:translateY(-50%);
+      background:none;border:none;cursor:pointer;color:var(--text-muted);
+      padding:4px;display:flex;align-items:center;justify-content:center;
+      transition:color .2s;line-height:0;
+    }
+    .input-right:hover { color:#ccc; }
+    .input-right svg { position:static;transform:none;color:inherit;pointer-events:none; }
+
+    /* ── Buttons ── */
+    .btn { width:100%;padding:15px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;border:none;border-radius:12px;cursor:pointer;transition:all .25s;letter-spacing:.1px; }
+    .btn-primary { background:#fff;color:#080808;box-shadow:0 4px 24px rgba(255,255,255,.12); }
+    .btn-primary:hover { transform:translateY(-2px);box-shadow:0 10px 32px rgba(255,255,255,.22);background:#f0f0f0; }
+    .btn-primary:active { transform:none; }
+    .btn-primary:disabled { opacity:.4;cursor:not-allowed;transform:none; }
+    .btn-secondary { background:rgba(255,255,255,.07);color:#aaa;border:1px solid var(--border); }
+    .btn-secondary:hover { background:rgba(255,255,255,.12); }
+    .btn-green { background:var(--green);color:#052e16;box-shadow:0 4px 20px rgba(74,222,128,.2); }
+    .btn-green:hover { transform:translateY(-2px);box-shadow:0 8px 28px rgba(74,222,128,.3); }
+    .btn-row { display:flex;gap:10px; }
+    .btn-row .btn { flex:1; }
+
+    /* ── Misc ── */
+    .divider { display:flex;align-items:center;gap:12px;margin:26px 0 0;color:#333;font-size:13px; }
+    .divider::before,.divider::after { content:'';flex:1;height:1px;background:rgba(255,255,255,.07); }
+    .link-row { text-align:center;margin-top:20px;font-size:14px;color:var(--text-muted); }
+    .link-row a { color:#c0c0c0;text-decoration:none;font-weight:500;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:1px;transition:color .2s;cursor:pointer; }
+    .link-row a:hover { color:#fff;border-bottom-color:#fff; }
+    .forgot { text-align:right;margin:-4px 0 22px; }
+    .forgot a { font-size:13px;color:#777;text-decoration:none;cursor:pointer;transition:color .2s; }
+    .forgot a:hover { color:#fff; }
+
+    /* ── Step indicator ── */
+    .steps { display:flex;align-items:center;margin-bottom:28px; }
+    .step { display:flex;align-items:center;gap:7px;flex:1; }
+    .step-circle { width:28px;height:28px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--text-muted);flex-shrink:0;transition:all .3s; }
+    .step.active .step-circle { background:#fff;border-color:#fff;color:#080808;box-shadow:0 0 16px rgba(255,255,255,.2); }
+    .step.done .step-circle { background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff; }
+    .step-label { font-size:12px;color:var(--text-muted);font-weight:500;transition:color .3s; }
+    .step.active .step-label { color:#d0d0d0; }
+    .step.done .step-label { color:#888; }
+    .step-line { flex:1;height:1px;background:rgba(255,255,255,.08);margin:0 8px;transition:background .3s; }
+    .step-line.done { background:rgba(255,255,255,.3); }
+    .step-panel { display:none; }
+    .step-panel.active { display:block; }
+    .section-label { font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:1.2px;margin-bottom:14px; }
+
+    /* ── Password strength ── */
+    .strength-bar { display:flex;gap:4px;margin:8px 0 4px; }
+    .seg { flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.07);transition:background .3s; }
+    .seg.weak{background:#666} .seg.fair{background:#999} .seg.strong{background:#ccc} .seg.great{background:#fff}
+    .strength-text { font-size:12px;color:var(--text-muted);margin-bottom:10px; }
+    .match-hint { font-size:12px;margin:6px 0 10px; }
+    .match-ok{color:#ccc} .match-err{color:#e55}
+    .terms { display:flex;align-items:flex-start;gap:10px;margin:16px 0; }
+    .terms input[type=checkbox] { width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#fff;cursor:pointer; }
+    .terms label { font-size:13px;color:var(--text-muted);line-height:1.5;cursor:pointer; }
+    .terms label a { color:#c0c0c0;text-decoration:underline; }
+    .name-row { display:flex;gap:10px; }
+    .name-row .input-wrap { flex:1;margin-bottom:0; }
+    .phone-row { display:flex;gap:10px;margin-bottom:14px; }
+    .country-code { padding:14px;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;color:#888;font-size:14px;white-space:nowrap;flex-shrink:0;display:flex;align-items:center; }
+
+    /* ── Page screens ── */
+    .page-screen { padding:0;align-items:flex-start; }
+    .topbar { padding:20px 24px 0;display:flex;align-items:center;gap:14px;flex-shrink:0; }
+    .back-btn { display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--text-secondary);cursor:pointer;transition:all .2s;flex-shrink:0; }
+    .back-btn:hover { background:rgba(255,255,255,.1);color:#fff; }
+    .page-title { font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px; }
+
+    /* ── Status pill ── */
+    .status-pill {
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.4px;
+    }
+    .status-open     { background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.25); }
+    .status-ongoing  { background:rgba(96,165,250,.12);color:var(--blue);border:1px solid rgba(96,165,250,.25); }
+    .status-resolved { background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.25); }
+    .status-dot { width:5px;height:5px;border-radius:50%;background:currentColor; }
+
+    /* ══════════════════════════════════════════════════════════════
+       HOME screen
+    ══════════════════════════════════════════════════════════════ */
+    #screen-home .inner { width:100%;max-width:460px; }
+    .home-topbar { display:flex;align-items:center;justify-content:space-between;margin-bottom:24px; }
+    .logout-btn { background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .2s; }
+    .logout-btn:hover { color:#fff; }
+    .notif-bell-btn {
+      position:relative;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;
+      width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;
+    }
+    .notif-bell-btn:hover { background:rgba(255,255,255,.1); }
+    .notif-badge {
+      position:absolute;top:-4px;right:-4px;
+      min-width:18px;height:18px;border-radius:9px;
+      background:#fff;color:#080808;font-size:10px;font-weight:700;
+      display:none;align-items:center;justify-content:center;padding:0 4px;
+    }
+    .notif-badge.visible { display:flex; }
+    .home-actions { display:flex;flex-direction:column;gap:12px;margin-bottom:28px; }
+
+    /* ── Notification inbox on home ── */
+    .inbox-section { margin-top:4px; }
+    .inbox-label { font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:1.2px;margin-bottom:12px;display:flex;align-items:center;gap:8px; }
+    .inbox-count { background:rgba(255,255,255,.1);border-radius:8px;padding:2px 8px;font-size:10px;color:#aaa; }
+    .inbox-empty { text-align:center;padding:28px 0;color:var(--text-muted);font-size:14px; }
+
+    /* Notification card in inbox */
+    .notif-card {
+      background:var(--input-bg);border:1px solid var(--border);border-radius:16px;
+      margin-bottom:10px;overflow:hidden;cursor:pointer;transition:border-color .2s;
+    }
+    .notif-card:hover { border-color:rgba(255,255,255,.2); }
+    .notif-card.unread { border-color:rgba(255,255,255,.18); }
+    .notif-card-inner { display:flex;gap:0;align-items:stretch; }
+    .notif-photo-thumb {
+      width:80px;flex-shrink:0;
+      background:rgba(255,255,255,.06);
+      display:flex;align-items:center;justify-content:center;font-size:28px;
+      border-right:1px solid var(--border);
+    }
+    .notif-photo-thumb img { width:80px;height:100%;object-fit:cover;display:block; }
+    .notif-body { flex:1;padding:14px; }
+    .notif-header { display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px; }
+    .notif-title { font-size:14px;font-weight:600;color:#fff; }
+    .notif-time { font-size:11px;color:var(--text-muted);flex-shrink:0; }
+    .notif-desc { font-size:13px;color:var(--text-muted);line-height:1.45;margin-bottom:10px; }
+    .notif-distance { font-size:12px;color:#888;display:flex;align-items:center;gap:4px;margin-bottom:10px; }
+    .notif-actions { display:flex;gap:8px; }
+    .notif-action-btn {
+      flex:1;padding:9px;border-radius:9px;border:none;font-family:'DM Sans',sans-serif;
+      font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;
+    }
+    .btn-confirm   { background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.25); }
+    .btn-confirm:hover   { background:rgba(74,222,128,.25); }
+    .btn-resolved  { background:rgba(96,165,250,.15);color:var(--blue);border:1px solid rgba(96,165,250,.25); }
+    .btn-resolved:hover  { background:rgba(96,165,250,.25); }
+    .btn-dismiss   { background:rgba(255,255,255,.05);color:#666;border:1px solid var(--border); }
+    .btn-dismiss:hover   { background:rgba(255,255,255,.1);color:#aaa; }
+    .unread-dot { width:8px;height:8px;border-radius:50%;background:#fff;flex-shrink:0;margin-top:3px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       PROXIMITY ALERT banner (slide-in from top)
+    ══════════════════════════════════════════════════════════════ */
+    #proximity-alert {
+      position:fixed;top:0;left:0;right:0;z-index:300;
+      transform:translateY(-100%);transition:transform .5s cubic-bezier(.16,1,.3,1);
+    }
+    #proximity-alert.show { transform:translateY(0); }
+    .prox-inner {
+      margin:12px 16px;
+      background:#111;border:1px solid rgba(255,255,255,.18);border-radius:18px;
+      padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.8);backdrop-filter:blur(30px);
+    }
+    .prox-top { display:flex;align-items:flex-start;gap:12px; }
+    .prox-icon { width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0; }
+    .prox-text { flex:1; }
+    .prox-headline { font-size:13px;font-weight:600;color:#fff;margin-bottom:3px; }
+    .prox-sub { font-size:12px;color:#888;line-height:1.4; }
+    .prox-close { background:none;border:none;color:#555;font-size:18px;cursor:pointer;padding:0 4px;flex-shrink:0;transition:color .2s; }
+    .prox-close:hover { color:#fff; }
+    .prox-photo { margin-top:12px;border-radius:12px;overflow:hidden;height:80px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font-size:28px; }
+    .prox-photo img { width:100%;height:100%;object-fit:cover;display:block; }
+    .prox-btns { display:flex;gap:8px;margin-top:12px; }
+    .prox-btn { flex:1;padding:10px;border-radius:10px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s; }
+    .prox-btn-confirm { background:#fff;color:#080808; }
+    .prox-btn-confirm:hover { background:#e0e0e0; }
+    .prox-btn-view { background:rgba(255,255,255,.08);color:#aaa;border:1px solid var(--border); }
+    .prox-btn-view:hover { background:rgba(255,255,255,.14);color:#fff; }
+    .prox-distance { font-size:11px;color:#555;margin-top:10px;display:flex;align-items:center;gap:4px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       MAP screen
+    ══════════════════════════════════════════════════════════════ */
+    #screen-map { flex-direction:column;padding:0; }
+    .map-wrap { position:relative;margin:20px 24px 0;height:300px;background:var(--input-bg);border:1px solid var(--border);border-radius:20px;overflow:hidden;flex-shrink:0; }
+    .map-placeholder { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#444;font-size:14px;line-height:1.6;width:70%; }
+    .map-pin { position:absolute;width:36px;height:36px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 16px rgba(0,0,0,.6);cursor:pointer;transition:transform .2s;border:2px solid rgba(255,255,255,.9); }
+    .map-pin:hover { transform:translate(-50%,-50%) scale(1.15) !important; }
+    .map-grid { position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none; }
+    .map-integrate-tip { position:absolute;bottom:10px;right:12px;padding:5px 10px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;font-size:10px;color:var(--text-muted);letter-spacing:.3px; }
+    .reports-section { padding:24px 24px 0;flex:1;overflow-y:auto; }
+    .reports-label { font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:1.2px;margin-bottom:12px; }
+    .report-card { display:flex;gap:12px;padding:14px;background:var(--input-bg);border:1px solid var(--border);border-radius:16px;margin-bottom:10px;cursor:pointer;transition:border-color .2s; }
+    .report-card:hover { border-color:rgba(255,255,255,.2); }
+    .report-emoji { width:40px;height:40px;flex-shrink:0;border-radius:10px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:20px; }
+    .report-info { flex:1; }
+    .report-title { font-size:14px;font-weight:600;color:#fff;margin-bottom:4px; }
+    .report-desc { font-size:13px;color:var(--text-muted);line-height:1.45; }
+    .report-meta { display:flex;align-items:center;gap:8px;margin-top:6px; }
+    .report-date { font-size:11px;color:var(--text-muted); }
+
+    /* ══════════════════════════════════════════════════════════════
+       COMPLAINT screen
+    ══════════════════════════════════════════════════════════════ */
+    #screen-complaint { flex-direction:column;padding:0; }
+    .complaint-form { padding:24px;overflow-y:auto;flex:1; }
+    .field-label { font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:1.2px;margin-bottom:10px; }
+    .field-group { margin-bottom:20px; }
+    .select-wrap { position:relative; }
+    .select-wrap::after { content:'';position:absolute;right:16px;top:50%;transform:translateY(-50%);border:5px solid transparent;border-top:6px solid var(--text-muted);pointer-events:none; }
+    .location-box { height:100px;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text-muted);font-size:14px;cursor:pointer;transition:all .2s; }
+    .location-box:hover,.location-box.selected { border-color:var(--border-focus);color:var(--text-secondary); }
+    .photo-preview-wrap { margin-top:10px;border-radius:12px;overflow:hidden;max-height:160px;display:none; }
+    .photo-preview-wrap img { width:100%;object-fit:cover;display:block;border-radius:12px; }
+    .photo-box { display:flex;align-items:center;justify-content:space-between;padding:15px 16px;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;cursor:pointer;font-size:15px;color:var(--text-muted);transition:all .2s; }
+    .photo-box:hover { border-color:var(--border-focus);color:var(--text-secondary); }
+    .photo-box input { display:none; }
+
+    /* ══════════════════════════════════════════════════════════════
+       REPORT DETAIL screen
+    ══════════════════════════════════════════════════════════════ */
+    #screen-detail { flex-direction:column;padding:0; }
+    .detail-photo { margin:20px 24px 0;border-radius:16px;overflow:hidden;height:200px;background:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:56px;flex-shrink:0; }
+    .detail-photo img { width:100%;height:100%;object-fit:cover;display:block; }
+    .detail-body { padding:20px 24px;flex:1;overflow-y:auto; }
+    .detail-title-row { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px; }
+    .detail-title { font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff; }
+    .detail-meta { display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap; }
+    .detail-date { font-size:13px;color:var(--text-muted); }
+    .detail-desc-label { font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:1.2px;margin-bottom:8px; }
+    .detail-desc { font-size:14px;color:var(--text-secondary);line-height:1.65;margin-bottom:20px; }
+    .detail-loc { display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;font-size:13px;color:var(--text-muted); }
+    .confirm-section { background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:20px;margin-bottom:16px; }
+    .confirm-label { font-size:13px;color:#aaa;margin-bottom:14px;line-height:1.5; }
+    .confirm-votes { display:flex;gap:8px;margin-bottom:14px; }
+    .vote-item { flex:1;text-align:center;padding:12px 8px;background:var(--input-bg);border:1px solid var(--border);border-radius:12px; }
+    .vote-num { font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;display:block; }
+    .vote-lbl { font-size:11px;color:var(--text-muted);letter-spacing:.5px; }
+    .vote-bar { height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:10px;overflow:hidden; }
+    .vote-bar-fill { height:100%;border-radius:2px;transition:width .6s ease; }
+    .detail-btns { display:flex;gap:10px;margin-bottom:20px; }
+    .detail-btn { flex:1;padding:13px;border-radius:12px;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s; }
+    .detail-btn-still  { background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.2); }
+    .detail-btn-still:hover  { background:rgba(251,191,36,.22); }
+    .detail-btn-fixed  { background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.2); }
+    .detail-btn-fixed:hover  { background:rgba(74,222,128,.22); }
+    .detail-btn-worse  { background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.2); }
+    .detail-btn-worse:hover  { background:rgba(248,113,113,.22); }
+    .voted-msg { text-align:center;font-size:13px;color:var(--green);padding:12px;background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.15);border-radius:10px;margin-bottom:16px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       SUCCESS + TOAST + SPINNER
+    ══════════════════════════════════════════════════════════════ */
+    #success-overlay { position:fixed;inset:0;z-index:200;background:rgba(8,8,8,.92);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .4s; }
+    #success-overlay.show { opacity:1;pointer-events:auto; }
+    .success-box { text-align:center;padding:48px 36px;background:var(--card-bg);border:1px solid var(--border);border-radius:24px;max-width:340px;width:90%;transform:scale(.9);transition:transform .4s cubic-bezier(.16,1,.3,1); }
+    #success-overlay.show .success-box { transform:scale(1); }
+    .success-emoji { font-size:52px;margin-bottom:20px; }
+    .success-title { font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:10px; }
+    .success-sub { font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:28px; }
+
+    #toast { position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 20px;font-size:14px;color:#fff;opacity:0;transition:all .3s;z-index:400;white-space:nowrap;backdrop-filter:blur(20px); }
+    #toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
+
+    .spinner { display:inline-block;width:18px;height:18px;border:2px solid rgba(0,0,0,.3);border-top-color:#080808;border-radius:50%;animation:spin .7s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+  </style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<!-- ═══ PROXIMITY ALERT (slides from top) ══════════════════════════════ -->
+<div id="proximity-alert">
+  <div class="prox-inner">
+    <div class="prox-top">
+      <div class="prox-icon" id="prox-icon">🚧</div>
+      <div class="prox-text">
+        <div class="prox-headline" id="prox-headline">Issue nearby!</div>
+        <div class="prox-sub" id="prox-sub">A community report is close to your location.</div>
+      </div>
+      <button class="prox-close" onclick="closeProxAlert()">×</button>
+    </div>
+    <div class="prox-photo" id="prox-photo-wrap"></div>
+    <div class="prox-distance" id="prox-distance">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span>~80m away</span>
+    </div>
+    <div class="prox-btns">
+      <button class="prox-btn prox-btn-confirm" id="prox-confirm-btn" onclick="proximityConfirm()">✓ Still there</button>
+      <button class="prox-btn prox-btn-view" onclick="proximityViewReport()">View Report</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- ═══ LOGIN ════════════════════════════════════════════════════════ -->
+  <div class="screen screen-center active" id="screen-login">
+    <div class="card">
+      <div class="badge"><div class="badge-dot"></div>Community Platform</div>
+      <div class="logo-row"><div class="logo-icon">🏙️</div><div class="logo-text">UrbanCare</div></div>
+      <p class="tagline">Sign in to connect with your community and help build a better neighbourhood.</p>
+      <div class="input-wrap">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        <input type="email" id="login-email" placeholder="Email address"/>
+      </div>
+      <div class="input-wrap has-eye">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="login-pw" placeholder="Password"/>
+        <button type="button" class="input-right" onclick="togglePw('login-pw',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+      <div class="forgot"><a href="#">Forgot password?</a></div>
+      <button class="btn btn-primary" id="login-btn" onclick="handleLogin()">Sign In</button>
+      <div class="divider">new here?</div>
+      <div class="link-row">Don't have an account? <a onclick="nav('signup')">Create one</a></div>
+    </div>
+  </div>
+
+  <!-- ═══ SIGNUP ═══════════════════════════════════════════════════════ -->
+  <div class="screen screen-center" id="screen-signup">
+    <div class="card" style="max-width:460px">
+      <div class="badge"><div class="badge-dot"></div>Community Platform</div>
+      <div class="logo-row"><div class="logo-icon">🏙️</div><div class="logo-text">UrbanCare</div></div>
+      <p class="tagline">Create your account to report issues and help your community.</p>
+      <div class="steps">
+        <div class="step active" id="step-1"><div class="step-circle">1</div><div class="step-label">Personal</div></div>
+        <div class="step-line" id="line-1"></div>
+        <div class="step" id="step-2" style="opacity:.4"><div class="step-circle">2</div><div class="step-label">Contact</div></div>
+        <div class="step-line" id="line-2"></div>
+        <div class="step" id="step-3" style="opacity:.4"><div class="step-circle">3</div><div class="step-label">Security</div></div>
+      </div>
+      <div class="step-panel active" id="panel-1">
+        <div class="section-label">Personal Info</div>
+        <div class="name-row" style="margin-bottom:14px">
+          <div class="input-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/></svg><input type="text" id="s-firstName" placeholder="First name"/></div>
+          <div class="input-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/></svg><input type="text" id="s-lastName" placeholder="Last name"/></div>
+        </div>
+        <div class="input-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 10h.01M12 10h.01M8 10h.01M16 14h.01M12 14h.01M8 14h.01"/></svg><input type="text" id="s-nid" placeholder="National ID number" maxlength="12"/></div>
+        <button class="btn btn-primary" onclick="signupNext(2)">Continue →</button>
+      </div>
+      <div class="step-panel" id="panel-2">
+        <div class="section-label">Contact Details</div>
+        <div class="input-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><input type="email" id="s-email" placeholder="Email address"/></div>
+        <div class="phone-row">
+          <div class="country-code">🇱🇰 +94</div>
+          <div class="input-wrap" style="flex:1;margin-bottom:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.69 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.17 6.17l.99-.99a2 2 0 0 1 2.11-.45c.91.33 1.85.56 2.81.69A2 2 0 0 1 22 16.92z"/></svg><input type="tel" id="s-phone" placeholder="Phone number"/></div>
+        </div>
+        <div class="btn-row" style="margin-top:20px"><button class="btn btn-secondary" onclick="signupNext(1)">← Back</button><button class="btn btn-primary" onclick="signupNext(3)">Continue →</button></div>
+      </div>
+      <div class="step-panel" id="panel-3">
+        <div class="section-label">Set Password</div>
+        <div class="input-wrap has-eye"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" id="s-pw" placeholder="Create password" oninput="checkStrength(this.value)"/><button type="button" class="input-right" onclick="togglePw('s-pw',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+        <div class="strength-bar"><div class="seg" id="seg1"></div><div class="seg" id="seg2"></div><div class="seg" id="seg3"></div><div class="seg" id="seg4"></div></div>
+        <div class="strength-text" id="strength-text">Enter a password</div>
+        <div class="input-wrap has-eye"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" id="s-confirm" placeholder="Confirm password" oninput="checkMatch()"/><button type="button" class="input-right" onclick="togglePw('s-confirm',this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+        <div class="match-hint" id="match-hint"></div>
+        <div class="terms"><input type="checkbox" id="terms-cb" onchange="toggleCreate()"/><label for="terms-cb">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label></div>
+        <div class="btn-row"><button class="btn btn-secondary" onclick="signupNext(2)">← Back</button><button class="btn btn-primary" id="create-btn" disabled onclick="handleCreate()">Create Account</button></div>
+      </div>
+      <div class="divider">already a member?</div>
+      <div class="link-row">Have an account? <a onclick="nav('login')">Sign in</a></div>
+    </div>
+  </div>
+
+  <!-- ═══ HOME ══════════════════════════════════════════════════════════ -->
+  <div class="screen screen-center" id="screen-home">
+    <div class="inner">
+      <div class="card" style="margin-bottom:16px">
+        <div class="home-topbar">
+          <div>
+            <div class="badge" style="margin-bottom:10px"><div class="badge-dot"></div>Community Platform</div>
+            <div class="logo-row" style="margin-bottom:4px"><div class="logo-icon">🏙️</div><div class="logo-text">UrbanCare</div></div>
+            <p class="tagline" style="margin-bottom:0;font-size:13px" id="home-greeting">Welcome back, neighbour!</p>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+            <button class="logout-btn" onclick="handleLogout()">Sign out</button>
+            <button class="notif-bell-btn" onclick="nav('home')" id="bell-btn" title="Notifications">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <div class="notif-badge" id="notif-badge">0</div>
+            </button>
+          </div>
+        </div>
+        <div class="home-actions">
+          <button class="btn btn-primary" onclick="nav('complaint')">Complain</button>
+          <button class="btn btn-secondary" onclick="nav('map')">Map</button>
+        </div>
+      </div>
+
+      <!-- Notification Inbox -->
+      <div class="inbox-section" id="inbox-section">
+        <div class="inbox-label">
+          NEARBY ALERTS
+          <span class="inbox-count" id="inbox-count">0</span>
+        </div>
+        <div id="inbox-list">
+          <div class="inbox-empty">📍 No nearby alerts yet.<br>Walk around to discover issues!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MAP ═══════════════════════════════════════════════════════════ -->
+  <div class="screen page-screen" id="screen-map" style="flex-direction:column">
+    <div class="topbar">
+      <div class="back-btn" onclick="nav('home')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Back</div>
+      <div class="page-title">Community Map</div>
+    </div>
+    <div class="map-wrap" id="map-wrap">
+      <div class="map-grid"></div>
+      <div class="map-placeholder">Here should be a map to see the live location and previously reported places near you</div>
+      <div class="map-integrate-tip">Integrate google_maps_flutter / Leaflet.js</div>
+    </div>
+    <div class="reports-section" id="reports-list">
+      <div class="reports-label">RECENT REPORTS</div>
+    </div>
+  </div>
+
+  <!-- ═══ COMPLAINT ══════════════════════════════════════════════════════ -->
+  <div class="screen page-screen" id="screen-complaint">
+    <div style="display:flex;flex-direction:column;width:100%;height:100%">
+      <div class="topbar">
+        <div class="back-btn" onclick="nav('home')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Back</div>
+        <div class="page-title">Submit Complaint</div>
+      </div>
+      <div class="complaint-form">
+        <div class="field-group">
+          <div class="field-label">TYPE</div>
+          <div class="select-wrap">
+            <select id="c-type">
+              <option value="" disabled selected>Select type</option>
+              <option value="road">🚧 Road Damage</option>
+              <option value="light">💡 Street Light</option>
+              <option value="garbage">🗑️ Garbage</option>
+              <option value="flooding">🌊 Flooding</option>
+              <option value="vandalism">🔨 Vandalism</option>
+              <option value="other">📌 Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">DESCRIPTION</div>
+          <textarea id="c-desc" placeholder="Describe the issue..."></textarea>
+        </div>
+        <div class="field-group">
+          <div class="field-label">LOCATION</div>
+          <div class="location-box" id="loc-box" onclick="selectLocation()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+            Map to select the location
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">PHOTO</div>
+          <label class="photo-box" for="c-photo">
+            <span id="photo-label">Upload photo</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <input type="file" id="c-photo" accept="image/*" onchange="handlePhoto(this)"/>
+          </label>
+          <div class="photo-preview-wrap" id="photo-preview-wrap"><img id="photo-preview" src="" alt=""/></div>
+        </div>
+        <button class="btn btn-primary" id="report-btn" onclick="handleReport()" style="margin-top:8px">Report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ REPORT DETAIL ══════════════════════════════════════════════════ -->
+  <div class="screen page-screen" id="screen-detail">
+    <div style="display:flex;flex-direction:column;width:100%;height:100%">
+      <div class="topbar" id="detail-topbar">
+        <div class="back-btn" id="detail-back" onclick="nav('home')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Back</div>
+        <div class="page-title">Report Detail</div>
+      </div>
+      <div class="detail-photo" id="detail-photo"></div>
+      <div class="detail-body">
+        <div class="detail-title-row">
+          <div class="detail-title" id="detail-title">Road Damage</div>
+          <div id="detail-status-pill"></div>
+        </div>
+        <div class="detail-meta">
+          <span class="detail-date" id="detail-date"></span>
+          <span id="detail-confirms" style="font-size:12px;color:#666"></span>
+        </div>
+        <div class="detail-desc-label">DESCRIPTION</div>
+        <div class="detail-desc" id="detail-desc"></div>
+        <div class="detail-loc">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span id="detail-loc-text">Near Community Centre</span>
+        </div>
+
+        <!-- Status confirmation section -->
+        <div class="confirm-section">
+          <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:6px;">📍 You were nearby — confirm status</div>
+          <div class="confirm-label">Help the community by confirming if this issue is still present or has been resolved.</div>
+          <div class="confirm-votes" id="confirm-votes"></div>
+          <div class="vote-bar"><div class="vote-bar-fill" id="vote-bar-fill" style="background:var(--green);width:0%"></div></div>
+          <div id="voted-msg-area"></div>
+        </div>
+
+        <div class="detail-btns" id="detail-confirm-btns">
+          <button class="detail-btn detail-btn-still"  onclick="castVote('still')">😐 Still There</button>
+          <button class="detail-btn detail-btn-fixed"  onclick="castVote('fixed')">✅ It's Fixed!</button>
+          <button class="detail-btn detail-btn-worse"  onclick="castVote('worse')">⚠️ Got Worse</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- ═══ SUCCESS OVERLAY ═══════════════════════════════════════════════════ -->
+<div id="success-overlay">
+  <div class="success-box">
+    <div class="success-emoji">✅</div>
+    <div class="success-title">Report Submitted!</div>
+    <p class="success-sub">Your complaint has been submitted. Community members nearby will be notified to confirm the issue.</p>
+    <button class="btn btn-primary" onclick="afterSuccess()">Back to Home</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  SAMPLE PHOTOS (placeholder colored SVGs as data URLs)
+// ═══════════════════════════════════════════════════════════════════
+const SAMPLE_PHOTOS = {
+  road:      'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="400" height="200" fill="#1a1a1a"/><rect x="40" y="80" width="320" height="80" rx="4" fill="#2a2a2a"/><ellipse cx="160" cy="140" rx="50" ry="25" fill="#111"/><ellipse cx="260" cy="100" rx="30" ry="15" fill="#0d0d0d"/><text x="200" y="50" text-anchor="middle" fill="#444" font-family="sans-serif" font-size="14">Road Damage</text></svg>'),
+  light:     'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="400" height="200" fill="#0a0a0a"/><rect x="185" y="20" width="30" height="140" fill="#1e1e1e"/><circle cx="200" cy="22" r="18" fill="#1a1a1a" stroke="#333" stroke-width="2"/><text x="200" y="190" text-anchor="middle" fill="#444" font-family="sans-serif" font-size="14">Street Light Out</text></svg>'),
+  garbage:   'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="400" height="200" fill="#111"/><rect x="60" y="100" width="280" height="80" rx="4" fill="#1a1a1a"/><rect x="100" y="70" width="60" height="40" rx="3" fill="#222"/><rect x="200" y="80" width="80" height="30" rx="3" fill="#1e1e1e"/><text x="200" y="50" text-anchor="middle" fill="#444" font-family="sans-serif" font-size="14">Garbage Pile</text></svg>'),
+  flooding:  'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="400" height="200" fill="#080c14"/><rect x="0" y="120" width="400" height="80" fill="#0d1520" rx="2"/><path d="M0 120 Q100 100 200 120 Q300 140 400 120" fill="#0f1e35"/><text x="200" y="80" text-anchor="middle" fill="#1e3a5f" font-family="sans-serif" font-size="14">Flooding</text></svg>'),
+  vandalism: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="400" height="200" fill="#111"/><rect x="60" y="40" width="280" height="140" fill="#1a1a1a"/><line x1="80" y1="60" x2="340" y2="180" stroke="#2a2a2a" stroke-width="8"/><line x1="120" y1="170" x2="280" y2="50" stroke="#252525" stroke-width="6"/><text x="200" y="25" text-anchor="middle" fill="#444" font-family="sans-serif" font-size="14">Vandalism</text></svg>'),
+  other:     'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="400" height="200" fill="#111"/><text x="200" y="105" text-anchor="middle" fill="#333" font-family="sans-serif" font-size="48">📌</text><text x="200" y="170" text-anchor="middle" fill="#333" font-family="sans-serif" font-size="14">Other Issue</text></svg>'),
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  APP STATE
+// ═══════════════════════════════════════════════════════════════════
+const state = {
+  currentScreen: 'login',
+  user: null,
+  detailFrom: 'home',
+  currentDetail: null,
+  signupStep: 1,
+  proximityQueue: [],
+  currentProx: null,
+  notifications: [], // inbox items on home
+  reports: [
+    {
+      id: 1, type:'road', emoji:'🚧', title:'Road Damage',
+      desc:'Large pothole near the bus stop on Main St. Very dangerous for vehicles and cyclists.',
+      date:'12/03/2026', lat:.28, lng:.18,
+      status:'open', photo: null,
+      votes:{ still:14, fixed:2, worse:3 }, userVoted: false,
+      location:'Near Central Bus Station'
+    },
+    {
+      id: 2, type:'light', emoji:'💡', title:'Street Light Out',
+      desc:'Street light not working for 3 days. The entire stretch is completely dark at night.',
+      date:'11/03/2026', lat:.35, lng:.75,
+      status:'ongoing', photo: null,
+      votes:{ still:8, fixed:1, worse:0 }, userVoted: false,
+      location:'Galle Road, Junction 5'
+    },
+    {
+      id: 3, type:'garbage', emoji:'🗑️', title:'Garbage Pile',
+      desc:'Garbage pile blocking the sidewalk by the park entrance. Smell is awful.',
+      date:'10/03/2026', lat:.72, lng:.42,
+      status:'open', photo: null,
+      votes:{ still:22, fixed:0, worse:5 }, userVoted: false,
+      location:'Near City Park Entrance'
+    },
+  ],
+};
+
+// Assign sample photos to seed reports
+state.reports.forEach(r => { r.photo = SAMPLE_PHOTOS[r.type] || SAMPLE_PHOTOS.other; });
+
+// ═══════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════════
+function nav(to) {
+  const from = document.getElementById('screen-' + state.currentScreen);
+  const dest  = document.getElementById('screen-' + to);
+  if (!dest || to === state.currentScreen) return;
+
+  from.classList.add('exit');
+  from.classList.remove('active');
+  setTimeout(() => {
+    from.classList.remove('exit');
+    dest.classList.add('active');
+    state.currentScreen = to;
+    dest.scrollTop = 0;
+    if (to === 'map')    renderMap();
+    if (to === 'home')   renderHome();
+    if (to === 'complaint') resetComplaint();
+  }, 160);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════════════════
+function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  if (!email || !email.includes('@')) { toast('Enter a valid email'); return; }
+  if (!pw) { toast('Enter your password'); return; }
+  const btn = document.getElementById('login-btn');
+  setLoading(btn, true, 'Sign In');
+  setTimeout(() => {
+    state.user = { name: email.split('@')[0], email };
+    setLoading(btn, false, 'Sign In');
+    nav('home');
+    // Simulate proximity detection after a delay
+    setTimeout(() => triggerProximityAlert(state.reports[0]), 3000);
+    setTimeout(() => triggerProximityAlert(state.reports[2]), 9000);
+  }, 900);
+}
+
+function handleLogout() {
+  state.user = null;
+  state.notifications = [];
+  updateBadge();
+  nav('login');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  HOME
+// ═══════════════════════════════════════════════════════════════════
+function renderHome() {
+  if (state.user) {
+    document.getElementById('home-greeting').innerHTML =
+      `Welcome back, <strong style="color:#fff">${capitalize(state.user.name)}</strong>! 👋`;
+  }
+  renderInbox();
+  updateBadge();
+}
+
+function updateBadge() {
+  const unread = state.notifications.filter(n => !n.read).length;
+  const badge = document.getElementById('notif-badge');
+  badge.textContent = unread;
+  badge.classList.toggle('visible', unread > 0);
+  document.getElementById('inbox-count').textContent = state.notifications.length;
+}
+
+function renderInbox() {
+  const list = document.getElementById('inbox-list');
+  if (state.notifications.length === 0) {
+    list.innerHTML = '<div class="inbox-empty">📍 No nearby alerts yet.<br>Walk around to discover issues!</div>';
+    return;
+  }
+
+  list.innerHTML = state.notifications.map(n => {
+    const r = state.reports.find(r => r.id === n.reportId);
+    if (!r) return '';
+    const statusClass = r.status === 'resolved' ? 'status-resolved' : r.status === 'ongoing' ? 'status-ongoing' : 'status-open';
+    const statusLabel = r.status === 'resolved' ? 'Resolved' : r.status === 'ongoing' ? 'Ongoing' : 'Open';
+    const photoHtml = r.photo
+      ? `<img src="${r.photo}" alt=""/>`
+      : `<span style="font-size:28px">${r.emoji}</span>`;
+
+    return `
+      <div class="notif-card ${n.read ? '' : 'unread'}" onclick="openDetail(${r.id}, 'home')">
+        <div class="notif-card-inner">
+          <div class="notif-photo-thumb">${photoHtml}</div>
+          <div class="notif-body">
+            <div class="notif-header">
+              <div style="display:flex;align-items:center;gap:8px">
+                ${!n.read ? '<div class="unread-dot"></div>' : ''}
+                <div class="notif-title">${r.emoji} ${r.title}</div>
+              </div>
+              <div class="notif-time">${n.time}</div>
+            </div>
+            <div class="notif-distance">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+              ${n.distance} away · ${r.location}
+            </div>
+            <div class="notif-desc">${r.desc.slice(0,70)}…</div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="status-pill ${statusClass}"><span class="status-dot"></span>${statusLabel}</span>
+              <span style="font-size:12px;color:#555">${totalVotes(r)} confirmations</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  PROXIMITY NOTIFICATION SYSTEM
+// ═══════════════════════════════════════════════════════════════════
+const DISTANCES = ['~45m', '~80m', '~120m', '~200m', '~60m'];
+
+function triggerProximityAlert(report) {
+  if (!report || state.currentScreen === 'detail') return;
+  const dist = DISTANCES[Math.floor(Math.random() * DISTANCES.length)];
+
+  // Add to notification inbox
+  const notif = {
+    id: Date.now(),
+    reportId: report.id,
+    distance: dist,
+    time: 'Just now',
+    read: false,
+  };
+  state.notifications.unshift(notif);
+  updateBadge();
+  if (state.currentScreen === 'home') renderInbox();
+
+  // Show banner
+  showProximityBanner(report, dist, notif.id);
+}
+
+function showProximityBanner(report, dist, notifId) {
+  state.currentProx = { report, notifId };
+
+  document.getElementById('prox-icon').textContent     = report.emoji;
+  document.getElementById('prox-headline').textContent = `${report.title} nearby!`;
+  document.getElementById('prox-sub').textContent      = report.desc.slice(0, 60) + '…';
+  document.getElementById('prox-distance').querySelector('span').textContent = dist + ' away';
+
+  // Photo
+  const pw = document.getElementById('prox-photo-wrap');
+  if (report.photo) {
+    pw.innerHTML = `<img src="${report.photo}" alt="" style="width:100%;height:80px;object-fit:cover;border-radius:12px;display:block"/>`;
+  } else {
+    pw.innerHTML = report.emoji;
+  }
+
+  const alert = document.getElementById('proximity-alert');
+  alert.classList.add('show');
+
+  // Auto-dismiss after 12s
+  clearTimeout(window._proxTimer);
+  window._proxTimer = setTimeout(closeProxAlert, 12000);
+}
+
+function closeProxAlert() {
+  document.getElementById('proximity-alert').classList.remove('show');
+  // Mark notification as delivered
+  if (state.currentProx) {
+    const n = state.notifications.find(n => n.id === state.currentProx.notifId);
+    if (n) { /* keep unread until user interacts */ }
+  }
+}
+
+function proximityConfirm() {
+  if (!state.currentProx) return;
+  const r = state.currentProx.report;
+  r.votes.still++;
+  toast(`✓ Confirmed – "${r.title}" still there. Thanks!`);
+  markNotifRead(state.currentProx.notifId);
+  closeProxAlert();
+  if (state.currentScreen === 'home') renderInbox();
+}
+
+function proximityViewReport() {
+  if (!state.currentProx) return;
+  closeProxAlert();
+  markNotifRead(state.currentProx.notifId);
+  openDetail(state.currentProx.report.id, state.currentScreen);
+}
+
+function markNotifRead(notifId) {
+  const n = state.notifications.find(n => n.id === notifId);
+  if (n) n.read = true;
+  updateBadge();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  REPORT DETAIL + VOTING
+// ═══════════════════════════════════════════════════════════════════
+function openDetail(reportId, from) {
+  const r = state.reports.find(r => r.id === reportId);
+  if (!r) return;
+  state.currentDetail = r;
+  state.detailFrom = from || 'home';
+
+  // Mark related notif as read
+  state.notifications.filter(n => n.reportId === reportId).forEach(n => n.read = true);
+  updateBadge();
+
+  // Photo
+  const photoEl = document.getElementById('detail-photo');
+  if (r.photo) {
+    photoEl.innerHTML = `<img src="${r.photo}" alt="" style="width:100%;height:200px;object-fit:cover;display:block"/>`;
+  } else {
+    photoEl.innerHTML = `<span style="font-size:56px">${r.emoji}</span>`;
+  }
+
+  document.getElementById('detail-title').textContent = r.title;
+  document.getElementById('detail-desc').textContent  = r.desc;
+  document.getElementById('detail-date').textContent  = '📅 ' + r.date;
+  document.getElementById('detail-loc-text').textContent = r.location;
+
+  renderDetailStatus(r);
+  renderDetailVotes(r);
+
+  // Back button target
+  document.getElementById('detail-back').onclick = () => nav(state.detailFrom);
+
+  nav('detail');
+}
+
+function renderDetailStatus(r) {
+  const sc   = r.status === 'resolved' ? 'status-resolved' : r.status === 'ongoing' ? 'status-ongoing' : 'status-open';
+  const slbl = r.status === 'resolved' ? 'Resolved' : r.status === 'ongoing' ? 'Ongoing' : 'Open';
+  document.getElementById('detail-status-pill').innerHTML =
+    `<span class="status-pill ${sc}"><span class="status-dot"></span>${slbl}</span>`;
+}
+
+function renderDetailVotes(r) {
+  const total = totalVotes(r);
+  const pct   = total > 0 ? Math.round((r.votes.fixed / total) * 100) : 0;
+
+  document.getElementById('detail-confirms').textContent = `${total} community confirmations`;
+  document.getElementById('confirm-votes').innerHTML = `
+    <div class="vote-item">
+      <span class="vote-num">${r.votes.still}</span>
+      <span class="vote-lbl">STILL THERE</span>
+    </div>
+    <div class="vote-item">
+      <span class="vote-num">${r.votes.fixed}</span>
+      <span class="vote-lbl">FIXED</span>
+    </div>
+    <div class="vote-item">
+      <span class="vote-num">${r.votes.worse}</span>
+      <span class="vote-lbl">WORSE</span>
+    </div>
+  `;
+
+  const barFill = document.getElementById('vote-bar-fill');
+  barFill.style.width = pct + '%';
+  barFill.style.background = pct > 60 ? 'var(--green)' : pct > 30 ? 'var(--yellow)' : 'var(--red)';
+
+  const btns = document.getElementById('detail-confirm-btns');
+  const vmsg = document.getElementById('voted-msg-area');
+  if (r.userVoted) {
+    btns.style.display = 'none';
+    vmsg.innerHTML = '<div class="voted-msg">✓ You already confirmed this report. Thank you!</div>';
+  } else {
+    btns.style.display = 'flex';
+    vmsg.innerHTML = '';
+  }
+}
+
+function castVote(type) {
+  const r = state.currentDetail;
+  if (!r || r.userVoted) return;
+
+  r.votes[type]++;
+  r.userVoted = true;
+
+  // Auto-update status
+  const total = totalVotes(r);
+  if (r.votes.fixed / total > 0.6)  r.status = 'resolved';
+  else if (r.votes.still + r.votes.worse > r.votes.fixed) r.status = 'ongoing';
+
+  renderDetailStatus(r);
+  renderDetailVotes(r);
+
+  const msgs = { still:'Thanks! Marked as still there.', fixed:'Great! Marked as fixed.', worse:'Noted! Marked as getting worse.' };
+  toast('✓ ' + msgs[type]);
+}
+
+function totalVotes(r) {
+  return r.votes.still + r.votes.fixed + r.votes.worse;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MAP
+// ═══════════════════════════════════════════════════════════════════
+function renderMap() {
+  const wrap = document.getElementById('map-wrap');
+  wrap.querySelectorAll('.map-pin').forEach(p => p.remove());
+
+  state.reports.forEach(r => {
+    const pin = document.createElement('div');
+    pin.className = 'map-pin';
+    pin.style.cssText = `left:${r.lng*100}%;top:${r.lat*100}%;transform:translate(-50%,-50%)`;
+    pin.textContent = r.emoji;
+    pin.title = r.title;
+    pin.onclick = () => openDetail(r.id, 'map');
+    wrap.appendChild(pin);
+  });
+
+  const list = document.getElementById('reports-list');
+  list.innerHTML = '<div class="reports-label">RECENT REPORTS</div>' +
+    state.reports.map(r => {
+      const sc = r.status === 'resolved' ? 'status-resolved' : r.status === 'ongoing' ? 'status-ongoing' : 'status-open';
+      const sl = r.status === 'resolved' ? 'Resolved' : r.status === 'ongoing' ? 'Ongoing' : 'Open';
+      return `
+        <div class="report-card" onclick="openDetail(${r.id},'map')">
+          <div class="report-emoji">${r.emoji}</div>
+          <div class="report-info">
+            <div class="report-title">${r.title}</div>
+            <div class="report-desc">${r.desc.slice(0,60)}…</div>
+            <div class="report-meta">
+              <span class="status-pill ${sc}" style="font-size:10px;padding:3px 8px"><span class="status-dot"></span>${sl}</span>
+              <span class="report-date">${r.date}</span>
+              <span style="font-size:11px;color:#444">${totalVotes(r)} votes</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  COMPLAINT
+// ═══════════════════════════════════════════════════════════════════
+let locationPicked = false;
+let photoDataUrl   = null;
+
+function resetComplaint() {
+  document.getElementById('c-type').value = '';
+  document.getElementById('c-desc').value = '';
+  document.getElementById('photo-label').textContent = 'Upload photo';
+  document.getElementById('photo-preview-wrap').style.display = 'none';
+  document.getElementById('photo-preview').src = '';
+  const lb = document.getElementById('loc-box');
+  lb.classList.remove('selected');
+  lb.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>Map to select the location`;
+  locationPicked = false;
+  photoDataUrl = null;
+}
+
+function selectLocation() {
+  locationPicked = true;
+  const lb = document.getElementById('loc-box');
+  lb.classList.add('selected');
+  lb.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>📍 Location selected ✓`;
+}
+
+function handlePhoto(input) {
+  if (input.files && input.files[0]) {
+    document.getElementById('photo-label').textContent = '📷 ' + input.files[0].name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      photoDataUrl = e.target.result;
+      document.getElementById('photo-preview').src = photoDataUrl;
+      document.getElementById('photo-preview-wrap').style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+const EMOJIS = { road:'🚧', light:'💡', garbage:'🗑️', flooding:'🌊', vandalism:'🔨', other:'📌' };
+const LABELS = { road:'Road Damage', light:'Street Light', garbage:'Garbage', flooding:'Flooding', vandalism:'Vandalism', other:'Other' };
+const LOCS   = { road:'Near Main Road', light:'Street Junction', garbage:'Park Entrance', flooding:'Low-lying Area', vandalism:'Community Wall', other:'Reported Location' };
+
+function handleReport() {
+  const type = document.getElementById('c-type').value;
+  const desc = document.getElementById('c-desc').value.trim();
+  if (!type)           { toast('Please select a type'); return; }
+  if (!desc)           { toast('Please add a description'); return; }
+  if (!locationPicked) { toast('Please select a location'); return; }
+
+  const btn = document.getElementById('report-btn');
+  setLoading(btn, true, 'Report');
+
+  setTimeout(() => {
+    const newReport = {
+      id: Date.now(),
+      type, emoji: EMOJIS[type], title: LABELS[type], desc,
+      date: new Date().toLocaleDateString('en-GB'),
+      lat: Math.random() * .7 + .1, lng: Math.random() * .7 + .1,
+      status: 'open',
+      photo: photoDataUrl || SAMPLE_PHOTOS[type] || SAMPLE_PHOTOS.other,
+      votes: { still:0, fixed:0, worse:0 }, userVoted: false,
+      location: LOCS[type] || 'Reported Location',
+    };
+    state.reports.unshift(newReport);
+    setLoading(btn, false, 'Report');
+    document.getElementById('success-overlay').classList.add('show');
+  }, 900);
+}
+
+function afterSuccess() {
+  document.getElementById('success-overlay').classList.remove('show');
+  nav('home');
+  // Simulate someone else nearby getting the alert after submission
+  setTimeout(() => {
+    const r = state.reports[0];
+    triggerProximityAlert(r);
+  }, 2000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SIGNUP
+// ═══════════════════════════════════════════════════════════════════
+function signupNext(n) {
+  if (n > state.signupStep) {
+    if (state.signupStep === 1 && (!v('s-firstName') || !v('s-lastName') || !v('s-nid'))) { toast('Please fill in all fields'); return; }
+    if (state.signupStep === 2 && (!v('s-email') || !document.getElementById('s-email').value.includes('@') || !v('s-phone'))) { toast('Please fill in all fields'); return; }
+  }
+  for (let i = 1; i <= 3; i++) {
+    const s = document.getElementById('step-' + i);
+    s.className = 'step'; s.style.opacity = '1';
+    if (i < n) { s.classList.add('done'); s.querySelector('.step-circle').innerHTML = '✓'; }
+    else if (i === n) { s.classList.add('active'); s.querySelector('.step-circle').textContent = i; }
+    else { s.style.opacity = '.4'; s.querySelector('.step-circle').textContent = i; }
+    if (i < 3) document.getElementById('line-' + i).className = 'step-line' + (i < n ? ' done' : '');
+  }
+  for (let i = 1; i <= 3; i++) document.getElementById('panel-' + i).className = 'step-panel' + (i === n ? ' active' : '');
+  state.signupStep = n;
+}
+
+function handleCreate() {
+  const btn = document.getElementById('create-btn');
+  setLoading(btn, true, 'Create Account');
+  setTimeout(() => {
+    state.user = { name: document.getElementById('s-firstName').value, email: document.getElementById('s-email').value };
+    setLoading(btn, false, 'Create Account');
+    nav('home');
+    setTimeout(resetSignup, 400);
+    setTimeout(() => triggerProximityAlert(state.reports[1]), 4000);
+  }, 1000);
+}
+
+function resetSignup() {
+  ['s-firstName','s-lastName','s-nid','s-email','s-phone','s-pw','s-confirm'].forEach(id => { const e = document.getElementById(id); if(e) e.value=''; });
+  document.getElementById('terms-cb').checked = false;
+  document.getElementById('create-btn').disabled = true;
+  document.getElementById('match-hint').textContent = '';
+  document.getElementById('strength-text').textContent = 'Enter a password';
+  ['seg1','seg2','seg3','seg4'].forEach(id => document.getElementById(id).className='seg');
+  signupNext(1);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  PASSWORD
+// ═══════════════════════════════════════════════════════════════════
+const EYE_OPEN  = `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>`;
+const EYE_CLOSE = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+function togglePw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  // Keep cursor at end of text after type switch
+  const len = inp.value.length;
+  inp.setSelectionRange(len, len);
+  // Update icon on the button itself
+  const icon = btn.querySelector('svg');
+  if (icon) icon.innerHTML = isHidden ? EYE_CLOSE : EYE_OPEN;
+  btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+}
+function checkStrength(val) {
+  let s=0; if(val.length>=8)s++;if(/[A-Z]/.test(val))s++;if(/[0-9]/.test(val))s++;if(/[^A-Za-z0-9]/.test(val))s++;
+  const cls=['','weak','fair','strong','great'];
+  for(let i=1;i<=4;i++) document.getElementById('seg'+i).className='seg'+(i<=s?' '+cls[s]:'');
+  document.getElementById('strength-text').textContent=val.length===0?'Enter a password':['','Weak','Fair','Strong','Great'][s]+' password';
+  checkMatch();
+}
+function checkMatch() {
+  const pw=document.getElementById('s-pw').value,cpw=document.getElementById('s-confirm').value,h=document.getElementById('match-hint');
+  if(!cpw){h.textContent='';return;}
+  if(pw===cpw){h.textContent='✓ Passwords match';h.className='match-hint match-ok';}
+  else{h.textContent='✗ Passwords do not match';h.className='match-hint match-err';}
+  toggleCreate();
+}
+function toggleCreate() {
+  const pw=document.getElementById('s-pw').value,cpw=document.getElementById('s-confirm').value,a=document.getElementById('terms-cb').checked;
+  document.getElementById('create-btn').disabled=!(pw&&pw===cpw&&a);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════════════
+function setLoading(btn, loading, label) { btn.disabled=loading;btn.innerHTML=loading?'<div class="spinner"></div>':label; }
+function v(id) { return document.getElementById(id)?.value?.trim(); }
+function capitalize(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+let toastTimer;
+function toast(msg) {
+  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>
