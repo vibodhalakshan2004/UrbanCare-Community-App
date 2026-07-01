@@ -1,7 +1,6 @@
 -- 1. Enable PostGIS (Just in case)
 CREATE EXTENSION IF NOT EXISTS postgis;
 
-
 DROP TABLE IF EXISTS locations CASCADE;
 
 -- 3. Create the strictly defined v3 Locations Table

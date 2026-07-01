@@ -7,7 +7,7 @@ CREATE TABLE departments (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Create the Authorities 
+-- 2. Create the Authorities (Using the final overriding version from your script)
 CREATE TABLE authorities (
     -- Links back to users table (1:1 Inheritance)
     authority_id UUID PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
@@ -21,3 +21,8 @@ CREATE TABLE authorities (
     avg_resolution_hours FLOAT,
     fcm_token TEXT
 );
+
+CREATE TRIGGER set_authorities_updated_at 
+BEFORE UPDATE ON authorities 
+FOR EACH ROW 
+EXECUTE FUNCTION update_updated_at_column();

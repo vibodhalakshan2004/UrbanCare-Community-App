@@ -35,7 +35,7 @@ CREATE INDEX idx_leaderboard_monthly_points ON leaderboard USING BTREE (monthly_
 CREATE TABLE complaint_confirmations (
     confirmation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     complaint_id UUID REFERENCES complaints(complaint_id),
-    citizen_id UUID REFERENCES citizens(user_id), -- Pointing to user_id (our inheritance fix)
+    citizen_id UUID REFERENCES citizens(user_id), 
     is_fixed BOOLEAN NOT NULL,
     confirmed_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(complaint_id, citizen_id)
@@ -53,6 +53,7 @@ CREATE TABLE complaint_images (
 CREATE INDEX idx_complaint_images_lookup ON complaint_images USING BTREE (complaint_id, image_type);
 
 -- 6. CREATE: active_complaint_points (The Geofencing View)
+-- Note: Fixed the syntax error where the WHERE clause was split by a semicolon
 CREATE OR REPLACE VIEW active_complaint_points AS 
 SELECT 
     c.complaint_id, 
@@ -64,5 +65,5 @@ SELECT
     l.geom 
 FROM complaints c 
 JOIN locations l ON l.location_id = c.location_id 
-WHERE c.status NOT IN ('fixed', 'closed', 'rejected');
-AND c.is_hidden = FALSE;
+WHERE c.status NOT IN ('fixed', 'closed', 'rejected') 
+  AND c.is_hidden = FALSE;
