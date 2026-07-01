@@ -40,13 +40,13 @@ class _TextInputState extends State<TextInput> {
       keyboardType: widget.keyboardType,
       obscureText: _obscure,
       maxLines: widget.maxLines,
-      style: const TextStyle(color: Color.white),
+      style: const TextStyle(color: Colors.white),
       validator: widget.validator,
       decoration: InputDecoration(
         hintText: widget.hint,
-        prefixIcon: widget.icon ++ null
+        prefixIcon: widget.icon == null
             ? null
-            : Icon(widget.icon, color: const Color(),size: 18),
+            : Icon(widget.icon, color: const Color(0xFF6B7280), size: 18),
         suffixIcon: widget.obscureText
             ? IconButton(
                 onPressed: () => setState(() => _obscure = !_obscure),
@@ -56,7 +56,7 @@ class _TextInputState extends State<TextInput> {
                   size: 18,
                 ),
               )
-            : null,  
+            : null,
       ),
     );
   }

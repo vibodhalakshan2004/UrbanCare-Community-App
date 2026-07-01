@@ -3,7 +3,7 @@ import 'package:urbancare_frontend/models/complaint.dart';
 import 'package:urbancare_frontend/repositories/complaint_repository.dart';
 import 'package:urbancare_frontend/widgets/primary_button.dart';
 
-class ComplaintDetailScreen extends StatefulWidget{
+class ComplaintDetailScreen extends StatefulWidget {
   const ComplaintDetailScreen({
     super.key,
     required this.complaint,
@@ -17,7 +17,7 @@ class ComplaintDetailScreen extends StatefulWidget{
   State<ComplaintDetailScreen> createState() => _ComplaintDetailScreenState();
 }
 
-class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
+class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
   late ComplaintModel _complaint;
   bool _loading = true;
   bool _verifying = false;
@@ -30,12 +30,12 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
   }
 
   Future<void> _loadLatest() async {
-    try{
-      final fresh=
-        await widget.complaintRepository.getComplaintById(_complaint.complaintId);
+    try {
+      final fresh =
+          await widget.complaintRepository.getComplaintById(_complaint.complaintId);
 
-      if(!mounted) return;
-      setState((){
+      if (!mounted) return;
+      setState(() {
         _complaint = ComplaintModel(
           complaintId: fresh.complaintId,
           issueType: fresh.issueType.isEmpty ? _complaint.issueType : fresh.issueType,
@@ -49,12 +49,12 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
           distanceMeters: _complaint.distanceMeters ?? fresh.distanceMeters,
           primaryImageUrl: fresh.primaryImageUrl ?? _complaint.primaryImageUrl,
         );
-      });  
-    }catch (_) {
-      // keep existing data on detail if fetch fails.
-    }finally {
-      if(mounted) {
-        setState(()=>_loading = false);
+      });
+    } catch (_) {
+      // Keep existing data on detail if fetch fails.
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
       }
     }
   }
@@ -67,15 +67,15 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
       return;
     }
 
-    setState(()=> _verifying = true);
+    setState(() => _verifying = true);
     try {
       final updated = await widget.complaintRepository.verifyComplaint(
         complaintId: _complaint.complaintId,
         isFixed: isFixed,
       );
 
-      if(!mounted) return;
-      setState((){
+      if (!mounted) return;
+      setState(() {
         _complaint = ComplaintModel(
           complaintId: updated.complaintId,
           issueType:
@@ -93,15 +93,15 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(successMessage)),
-      );   
-    }catch(e){
-      if(!mounted) return;
+      );
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
-      );  
-    }finally {
-      if(mounted){
-        setState(()=> _verifying = false);
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _verifying = false);
       }
     }
   }
@@ -141,7 +141,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
                               style: const TextStyle(fontSize: 56),
                             ),
                           ),
-                       ),  
+                        ),
                 ),
                 const SizedBox(height: 18),
                 Row(
@@ -244,16 +244,16 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
                   ),
                 ),
               ],
-          ),
+            ),
     );
   }
 
   Color _statusColor(String status) {
     final normalized = status.toLowerCase();
-    if (normalized == 'fixed' || normalized == 'closed' || normalized == 'resolved'){
+    if (normalized == 'fixed' || normalized == 'closed' || normalized == 'resolved') {
       return const Color(0xFF4ADE80);
     }
-    if(normalized == 'in_progress' || normalized == 'assigned'){
+    if (normalized == 'in_progress' || normalized == 'assigned') {
       return const Color(0xFF60A5FA);
     }
     return const Color(0xFFFBBF24);

@@ -63,22 +63,22 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
     setState(() => _loadingLocation = true);
     try {
       final location = await widget.complaintRepository.getCurrentLocation();
-      if(!mounted) return;
+      if (!mounted) return;
       setState(() {
         _location = location;
-        if(_manualLocationMode) {
+        if (_manualLocationMode) {
           _selectedLocation ??= location;
-        } else{
+        } else {
           _selectedLocation = location;
         }
       });
-    }catch (e) {
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
     } finally {
-      if(mounted) {
+      if (mounted) {
         setState(() => _loadingLocation = false);
       }
     }
@@ -103,7 +103,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
   void _selectLocation(double latitude, double longitude) {
     if (!_manualLocationMode) {
       return;
-    } 
+    }
 
     setState(() {
       _selectedLocation = AppLocation(
@@ -120,8 +120,8 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
     _selectLocation(target.latitude, target.longitude);
   }
 
-  void _selectLocationOnOsmMap(latlng.LatLng target){
-    _selectLocation(target.latitude,target.longitude);
+  void _selectLocationOnOsmMap(latlng.LatLng target) {
+    _selectLocation(target.latitude, target.longitude);
   }
 
   Set<Marker> _buildLocationMarkers() {
@@ -157,7 +157,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
   List<osm.Marker> _buildOsmLocationMarkers() {
     final markers = <osm.Marker>[];
 
-    if(_location != null) {
+    if (_location != null) {
       markers.add(
         osm.Marker(
           point: latlng.LatLng(_location!.latitude, _location!.longitude),
@@ -208,12 +208,12 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
   }
 
   Future<void> _submit() async {
-    if(!_formKey.currentState!.validate()){
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
     final selectedLocation = _selectedLocation ?? _location;
-    if(selectedLocation == null){
+    if (selectedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please allow location and try again.')),
       );
@@ -221,7 +221,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
     }
 
     setState(() => _submitting = true);
-    try{
+    try {
       await widget.complaintRepository.createComplaint(
         issueType: _issueType,
         title: _titleController.text.trim(),
@@ -230,26 +230,26 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
         location: selectedLocation,
       );
 
-      if(!mounted) return;
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Complaint submitted successfully.')),
       );
       Navigator.of(context).pop(true);
-    } catch(e){
-      if(!mounted) return;
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
     } finally {
-      if(mounted){
+      if (mounted) {
         setState(() => _submitting = false);
       }
     }
   }
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Submit Complaint')),
       body: SingleChildScrollView(
@@ -284,7 +284,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                   if (value != null) {
                     setState(() => _issueType = value);
                   }
-                },    
+                },
               ),
               const SizedBox(height: 16),
               TextInput(
@@ -292,7 +292,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                 hint: 'Title',
                 icon: Icons.title,
                 validator: (value) {
-                  if(value == null || value.trim().isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Title is required';
                   }
                   return null;
@@ -304,7 +304,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                 hint: 'Describe the issue...',
                 maxLines: 5,
                 validator: (value) {
-                  if(value == null || value.trim().isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Description is required';
                   }
                   return null;
@@ -334,44 +334,44 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _selectedLocation == null
-                                ? 'Location unavailable'
-                                : _formatCoordinates(_selectedLocation!),
-                            style: const TextStyle(color: Color(0xFFD1D5DB)),    
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _manualLocationMode ? 'Manual' : 'Current',
-                            style: const TextStyle(
-                              color: Color(0xFF9CA3AF),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                      )
+                    : Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _selectedLocation == null
+                                  ? 'Location unavailable'
+                                  : _formatCoordinates(_selectedLocation!),
+                              style: const TextStyle(color: Color(0xFFD1D5DB)),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        TextButton(
-                          onPressed: _loadLocation,
-                          child: const Text('Refresh'),
-                        ),
-                      ],
-                  ),  
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _manualLocationMode ? 'Manual' : 'Current',
+                              style: const TextStyle(
+                                color: Color(0xFF9CA3AF),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          TextButton(
+                            onPressed: _loadLocation,
+                            child: const Text('Refresh'),
+                          ),
+                        ],
+                      ),
               ),
               const SizedBox(height: 10),
               Container(
@@ -420,7 +420,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                                 style: TextStyle(color: Color(0xFF9CA3AF)),
                               ),
                             ),
-                        )
+                          )
                         : kIsWeb
                             ? osm.FlutterMap(
                                 options: osm.MapOptions(
@@ -442,7 +442,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                                   ),
                                   osm.MarkerLayer(markers: _buildOsmLocationMarkers()),
                                 ],
-                            )
+                              )
                             : GoogleMap(
                                 initialCameraPosition: CameraPosition(
                                   target: LatLng(
@@ -457,22 +457,22 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                                 onTap: _manualLocationMode
                                     ? _selectLocationOnGoogleMap
                                     : null,
-                            ),
+                              ),
               ),
               const SizedBox(height: 6),
               Text(
                 _manualLocationMode
-                     ? 'Tap on the map to choose complaint location. Blue marker is current location.'
+                    ? 'Tap on the map to choose complaint location. Blue marker is current location.'
                     : 'Using your current location. Enable manual mode to select a different point.',
                 style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
               ),
-              if(_location != null)
+              if (_location != null)
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     onPressed: () => setState(() => _selectedLocation = _location),
                     icon: const Icon(Icons.my_location_outlined),
-                    label: const Text('use current location'),
+                    label: const Text('Use current location'),
                   ),
                 ),
               const SizedBox(height: 18),
@@ -493,7 +493,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                   _pickedImage == null ? 'Choose image' : 'Change image',
                 ),
               ),
-              if(_pickedImage != null) ...[
+              if (_pickedImage != null) ...[
                 const SizedBox(height: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -503,7 +503,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                           height: 180,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                      ),
+                        )
                       : Image.file(
                           File(_pickedImage!.path),
                           height: 180,
@@ -517,7 +517,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                 label: 'Report',
                 loading: _submitting,
                 onPressed: _submit,
-              ),  
+              ),
             ],
           ),
         ),
