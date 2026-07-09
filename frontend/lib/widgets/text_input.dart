@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:urbancare_frontend/theme/app_theme.dart';
 
 class TextInput extends StatefulWidget {
   const TextInput({
@@ -35,28 +36,30 @@ class _TextInputState extends State<TextInput> {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
+
     return TextFormField(
       controller: widget.controller,
       keyboardType: widget.keyboardType,
       obscureText: _obscure,
       maxLines: widget.maxLines,
-      style: const TextStyle(color: Color.white),
+      style: TextStyle(color: textColor),
       validator: widget.validator,
       decoration: InputDecoration(
         hintText: widget.hint,
-        prefixIcon: widget.icon ++ null
+        prefixIcon: widget.icon == null
             ? null
-            : Icon(widget.icon, color: const Color(),size: 18),
+            : Icon(widget.icon, color: context.onSurfaceVariant, size: 18),
         suffixIcon: widget.obscureText
             ? IconButton(
                 onPressed: () => setState(() => _obscure = !_obscure),
                 icon: Icon(
                   _obscure ? Icons.visibility : Icons.visibility_off,
-                  color: const Color(0xFF6B7280),
+                  color: context.onSurfaceVariant,
                   size: 18,
                 ),
               )
-            : null,  
+            : null,
       ),
     );
   }

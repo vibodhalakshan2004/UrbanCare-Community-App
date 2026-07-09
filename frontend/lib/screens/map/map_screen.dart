@@ -1,12 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as osm;
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:latlong2/latlong.dart' as latlng;
 import 'package:urbancare_frontend/models/complaint.dart';
 import 'package:urbancare_frontend/models/location.dart';
 import 'package:urbancare_frontend/repositories/complaint_repository.dart';
 import 'package:urbancare_frontend/widgets/complaint_card.dart';
+import 'package:urbancare_frontend/theme/app_theme.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({
@@ -25,9 +24,6 @@ class _MapScreenState extends State<MapScreen> {
   String? _error;
   AppLocation? _userLocation;
   List<ComplaintModel> _nearby = const [];
-
-  final osm.MapController _osmMapController = osm.MapController();
-  GoogleMapController? _googleMapController;
 
   latlng.LatLng _osmCenterValue = const latlng.LatLng(6.9271, 79.8612);
   double _mapZoom = 14;
@@ -81,41 +77,6 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Set<Marker> _buildMarkers() {
-    final markers = <Marker>{};
-
-    if (_userLocation != null) {
-      markers.add(
-        Marker(
-          markerId: const MarkerId('user_location'),
-          position: LatLng(_userLocation!.latitude, _userLocation!.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-          infoWindow: const InfoWindow(title: 'You are here'),
-        ),
-      );
-    }
-
-    for (final complaint in _nearby) {
-      final loc = complaint.location;
-      if (loc == null) {
-        continue;
-      }
-
-      markers.add(
-        Marker(
-          markerId: MarkerId(complaint.complaintId),
-          position: LatLng(loc.latitude, loc.longitude),
-          infoWindow: InfoWindow(
-            title: complaint.displayTitle,
-            snippet: complaint.status,
-          ),
-        ),
-      );
-    }
-
-    return markers;
-  }
-
   latlng.LatLng _osmCenter() {
     return _osmCenterValue;
   }
@@ -165,13 +126,6 @@ class _MapScreenState extends State<MapScreen> {
     const minZoom = 3.0;
     const maxZoom = 19.0;
     final nextZoom = (_mapZoom + 1).clamp(minZoom, maxZoom).toDouble();
-
-    if (kIsWeb) {
-      _osmMapController.move(_osmCenterValue, nextZoom);
-    } else {
-      _googleMapController?.animateCamera(CameraUpdate.zoomTo(nextZoom));
-    }
-
     setState(() => _mapZoom = nextZoom);
   }
 
@@ -179,13 +133,6 @@ class _MapScreenState extends State<MapScreen> {
     const minZoom = 3.0;
     const maxZoom = 19.0;
     final nextZoom = (_mapZoom - 1).clamp(minZoom, maxZoom).toDouble();
-
-    if (kIsWeb) {
-      _osmMapController.move(_osmCenterValue, nextZoom);
-    } else {
-      _googleMapController?.animateCamera(CameraUpdate.zoomTo(nextZoom));
-    }
-
     setState(() => _mapZoom = nextZoom);
   }
 
@@ -225,7 +172,7 @@ class _MapScreenState extends State<MapScreen> {
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Color(0xFF9CA3AF)),
+                  style: TextStyle(color: context.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
@@ -239,10 +186,6 @@ class _MapScreenState extends State<MapScreen> {
       );
     }
 
-    final center = _userLocation == null
-        ? const LatLng(6.9271, 79.8612)
-        : LatLng(_userLocation!.latitude, _userLocation!.longitude);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Community Map')),
       body: Column(
@@ -253,57 +196,43 @@ class _MapScreenState extends State<MapScreen> {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              border: Border.all(color: context.borderColor),
             ),
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: kIsWeb
-                      ? osm.FlutterMap(
-                          mapController: _osmMapController,
-                          options: osm.MapOptions(
-                            initialCenter: _osmCenter(),
-                            initialZoom: _mapZoom,
-                            interactionOptions: const osm.InteractionOptions(
-                              flags: osm.InteractiveFlag.all,
-                            ),
-                            onPositionChanged: (position, hasGesture) {
-                              final nextCenter = position.center;
-                              final nextZoom = position.zoom;
-                              if (nextCenter != null) {
-                                _osmCenterValue = nextCenter;
-                              }
-                              if (nextZoom != null) {
-                                _mapZoom = nextZoom;
-                              }
-                            },
-                          ),
-                          children: [
-                            osm.TileLayer(
-                              urlTemplate:
-                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              userAgentPackageName: 'com.urbancare.urbancare_frontend',
-                            ),
-                            osm.MarkerLayer(markers: _buildOsmMarkers()),
-                          ],
-                        )
-                      : GoogleMap(
-                          initialCameraPosition: CameraPosition(
-                            target: center,
-                            zoom: _mapZoom,
-                          ),
-                          onMapCreated: (controller) {
-                            _googleMapController = controller;
-                          },
-                          onCameraMove: (position) {
-                            _mapZoom = position.zoom;
-                          },
-                          myLocationEnabled: _userLocation != null,
-                          myLocationButtonEnabled: _userLocation != null,
-                          zoomControlsEnabled: true,
-                          zoomGesturesEnabled: true,
-                          markers: _buildMarkers(),
-                        ),
+                  child: osm.FlutterMap(
+                    key: ValueKey<String>(
+                      '${_osmCenterValue.latitude.toStringAsFixed(6)}:'
+                      '${_osmCenterValue.longitude.toStringAsFixed(6)}:'
+                      '${_mapZoom.toStringAsFixed(2)}',
+                    ),
+                    options: osm.MapOptions(
+                      initialCenter: _osmCenter(),
+                      initialZoom: _mapZoom,
+                      interactionOptions: const osm.InteractionOptions(
+                        flags: osm.InteractiveFlag.all,
+                      ),
+                      onPositionChanged: (position, hasGesture) {
+                        final nextCenter = position.center;
+                        final nextZoom = position.zoom;
+                        if (nextCenter != null) {
+                          _osmCenterValue = nextCenter;
+                        }
+                        if (nextZoom != null) {
+                          _mapZoom = nextZoom;
+                        }
+                      },
+                    ),
+                    children: [
+                      osm.TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.urbancare.urbancare_frontend',
+                      ),
+                      osm.MarkerLayer(markers: _buildOsmMarkers()),
+                    ],
+                  ),
                 ),
                 Positioned(
                   right: 12,
@@ -327,10 +256,10 @@ class _MapScreenState extends State<MapScreen> {
           ),
           Expanded(
             child: _nearby.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'No nearby complaints found for this location.',
-                      style: TextStyle(color: Color(0xFF9CA3AF)),
+                      style: TextStyle(color: context.onSurfaceVariant),
                     ),
                   )
                 : RefreshIndicator(

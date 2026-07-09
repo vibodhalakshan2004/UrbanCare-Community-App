@@ -1,5 +1,5 @@
 # Import SQLAlchemy column types
-from sqlalchemy import Column, Boolean, ForeignKey, DateTime
+from sqlalchemy import Column, Boolean, ForeignKey, DateTime, String
 
 # PostgreSQL UUID type
 from sqlalchemy.dialects.postgresql import UUID
@@ -48,6 +48,12 @@ class ComplaintVerification(Base):
     is_fixed = Column(
         Boolean,
         nullable=False
+    )
+
+    # Detailed user choice for non-fixed confirmations.
+    feedback_type = Column(
+        String(20),
+        nullable=True
     )
 
     # Timestamp when the verification was submitted

@@ -1,5 +1,6 @@
 # Import SQLAlchemy column types
 from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Integer, Boolean
+from sqlalchemy.orm import relationship
 
 # PostgreSQL UUID type
 from sqlalchemy.dialects.postgresql import UUID
@@ -85,3 +86,7 @@ class Complaint(Base):
         server_default=func.now(),
         onupdate=func.now()
     )
+
+    # Relationship to Location model
+    # Eagerly loads location data when complaint is queried
+    location = relationship("Location", foreign_keys=[location_id])

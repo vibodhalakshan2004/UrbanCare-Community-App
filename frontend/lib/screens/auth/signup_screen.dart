@@ -105,12 +105,28 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'UrbanCare Signup',
-                  style: GoogleFonts.syne(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset('assets/images/app_icon.png', fit: BoxFit.cover),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'UrbanCare Signup',
+                      style: GoogleFonts.syne(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 6),
                 const Text(

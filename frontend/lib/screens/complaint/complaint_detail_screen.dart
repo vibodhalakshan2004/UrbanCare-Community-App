@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart' as fm;
+import 'package:latlong2/latlong.dart' as latlng;
 import 'package:urbancare_frontend/models/complaint.dart';
 import 'package:urbancare_frontend/repositories/complaint_repository.dart';
 import 'package:urbancare_frontend/widgets/primary_button.dart';
+import 'package:urbancare_frontend/theme/app_theme.dart';
 
-class ComplaintDetailScreen extends StatefulWidget{
+enum _VerificationChoice { fixed, stillThere, gotWorse }
+
+class ComplaintDetailScreen extends StatefulWidget {
   const ComplaintDetailScreen({
     super.key,
     required this.complaint,
@@ -17,25 +22,57 @@ class ComplaintDetailScreen extends StatefulWidget{
   State<ComplaintDetailScreen> createState() => _ComplaintDetailScreenState();
 }
 
-class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
+class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
   late ComplaintModel _complaint;
+  _VerificationChoice? _selectedChoice;
   bool _loading = true;
   bool _verifying = false;
+  final _mapController = fm.MapController();
 
   @override
   void initState() {
     super.initState();
     _complaint = widget.complaint;
+    _selectedChoice = _choiceFromComplaint(_complaint);
     _loadLatest();
   }
 
-  Future<void> _loadLatest() async {
-    try{
-      final fresh=
-        await widget.complaintRepository.getComplaintById(_complaint.complaintId);
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
 
-      if(!mounted) return;
-      setState((){
+
+
+  _VerificationChoice? _choiceFromComplaint(ComplaintModel complaint) {
+    final feedback = complaint.myFeedbackType?.toLowerCase().trim();
+    if (feedback == 'fixed') {
+      return _VerificationChoice.fixed;
+    }
+    if (feedback == 'got_worse') {
+      return _VerificationChoice.gotWorse;
+    }
+    if (feedback == 'still_there') {
+      return _VerificationChoice.stillThere;
+    }
+
+    if (complaint.myVerification == true) {
+      return _VerificationChoice.fixed;
+    }
+    if (complaint.myVerification == false) {
+      return _VerificationChoice.stillThere;
+    }
+    return null;
+  }
+
+  Future<void> _loadLatest() async {
+    try {
+      final fresh =
+          await widget.complaintRepository.getComplaintById(_complaint.complaintId);
+
+      if (!mounted) return;
+      setState(() {
         _complaint = ComplaintModel(
           complaintId: fresh.complaintId,
           issueType: fresh.issueType.isEmpty ? _complaint.issueType : fresh.issueType,
@@ -45,37 +82,42 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
           status: fresh.status,
           citizenId: fresh.citizenId ?? _complaint.citizenId,
           locationId: fresh.locationId ?? _complaint.locationId,
-          location: _complaint.location ?? fresh.location,
+          location: fresh.location ?? _complaint.location,
           distanceMeters: _complaint.distanceMeters ?? fresh.distanceMeters,
           primaryImageUrl: fresh.primaryImageUrl ?? _complaint.primaryImageUrl,
+          myVerification: fresh.myVerification,
+          myFeedbackType: fresh.myFeedbackType,
         );
-      });  
-    }catch (_) {
-      // keep existing data on detail if fetch fails.
-    }finally {
-      if(mounted) {
-        setState(()=>_loading = false);
+        _selectedChoice = _choiceFromComplaint(_complaint);
+      });
+    } catch (_) {
+      // Keep existing data on detail if fetch fails.
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
       }
     }
   }
 
   Future<void> _verify({
     required bool isFixed,
+    required _VerificationChoice choice,
     required String successMessage,
   }) async {
     if (_verifying) {
       return;
     }
 
-    setState(()=> _verifying = true);
+    setState(() => _verifying = true);
     try {
       final updated = await widget.complaintRepository.verifyComplaint(
         complaintId: _complaint.complaintId,
         isFixed: isFixed,
+        feedbackType: _feedbackTypeFromChoice(choice),
       );
 
-      if(!mounted) return;
-      setState((){
+      if (!mounted) return;
+      setState(() {
         _complaint = ComplaintModel(
           complaintId: updated.complaintId,
           issueType:
@@ -88,21 +130,35 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
           location: _complaint.location,
           distanceMeters: _complaint.distanceMeters,
           primaryImageUrl: _complaint.primaryImageUrl,
+          myVerification: updated.myVerification,
+          myFeedbackType: updated.myFeedbackType,
         );
+        _selectedChoice = _choiceFromComplaint(_complaint) ?? choice;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(successMessage)),
-      );   
-    }catch(e){
-      if(!mounted) return;
+      );
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
-      );  
-    }finally {
-      if(mounted){
-        setState(()=> _verifying = false);
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _verifying = false);
       }
+    }
+  }
+
+  String _feedbackTypeFromChoice(_VerificationChoice choice) {
+    switch (choice) {
+      case _VerificationChoice.fixed:
+        return 'fixed';
+      case _VerificationChoice.stillThere:
+        return 'still_there';
+      case _VerificationChoice.gotWorse:
+        return 'got_worse';
     }
   }
 
@@ -121,9 +177,9 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
                   height: 200,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: context.fill04,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    border: Border.all(color: context.borderColor),
                   ),
                   child: _complaint.primaryImageUrl == null
                       ? Text(
@@ -141,7 +197,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
                               style: const TextStyle(fontSize: 56),
                             ),
                           ),
-                       ),  
+                        ),
                 ),
                 const SizedBox(height: 18),
                 Row(
@@ -176,10 +232,10 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
                   ],
                 ),
                 const SizedBox(height: 10),
-                const Text(
+                Text(
                   'DESCRIPTION',
                   style: TextStyle(
-                    color: Color(0xFF6B7280),
+                    color: context.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                     letterSpacing: 1.1,
@@ -188,8 +244,8 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
                 const SizedBox(height: 8),
                 Text(
                   _complaint.description,
-                  style: const TextStyle(
-                    color: Color(0xFFD1D5DB),
+                  style: TextStyle(
+                    color: context.onSurface,
                     fontSize: 14,
                     height: 1.6,
                   ),
@@ -198,62 +254,152 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen>{
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.04),
+                    color: context.fill04,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    border: Border.all(color: context.borderColor),
                   ),
                   child: Text(
                     _complaint.location?.address ??
                         '📍 ${_complaint.location?.latitude.toStringAsFixed(5) ?? '-'}, '
                             '${_complaint.location?.longitude.toStringAsFixed(5) ?? '-'}',
-                    style: const TextStyle(color: Color(0xFF9CA3AF)),
+                    style: TextStyle(color: context.onSurfaceVariant),
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 18),
+                if (_complaint.location != null)
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: SizedBox(
+                          height: 250,
+                          child: fm.FlutterMap(
+                            mapController: _mapController,
+                            options: fm.MapOptions(
+                              initialCenter: latlng.LatLng(
+                                _complaint.location!.latitude,
+                                _complaint.location!.longitude,
+                              ),
+                              initialZoom: 15,
+                            ),
+                            children: [
+                              fm.TileLayer(
+                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'com.urbancare.urbancare_frontend',
+                              ),
+                              fm.MarkerLayer(
+                                markers: [
+                                  fm.Marker(
+                                    point: latlng.LatLng(
+                                      _complaint.location!.latitude,
+                                      _complaint.location!.longitude,
+                                    ),
+                                    width: 40,
+                                    height: 40,
+                                    child: const Icon(
+                                      Icons.location_pin,
+                                      color: Color(0xFFEF4444),
+                                      size: 40,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 12,
+                        bottom: 12,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            FloatingActionButton(
+                              mini: true,
+                              heroTag: 'zoom_in',
+                              backgroundColor: Colors.white,
+                              onPressed: () {
+                                _mapController.move(
+                                  _mapController.camera.center,
+                                  _mapController.camera.zoom + 1,
+                                );
+                              },
+                              child: const Icon(Icons.add, color: Colors.black),
+                            ),
+                            const SizedBox(height: 8),
+                            FloatingActionButton(
+                              mini: true,
+                              heroTag: 'zoom_out',
+                              backgroundColor: Colors.white,
+                              onPressed: () {
+                                _mapController.move(
+                                  _mapController.camera.center,
+                                  _mapController.camera.zoom - 1,
+                                );
+                              },
+                              child: const Icon(Icons.remove, color: Colors.black),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 18),
+                const SizedBox(height: 4),
                 const Text(
                   'Confirm current status',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 10),
                 PrimaryButton(
-                  label: '😐 Still There',
+                  label: _selectedChoice == _VerificationChoice.stillThere
+                      ? '✓ 😐 Still There'
+                      : '😐 Still There',
                   loading: _verifying,
-                  isSecondary: true,
+                  isSecondary: _selectedChoice != _VerificationChoice.stillThere,
                   onPressed: () => _verify(
                     isFixed: false,
+                    choice: _VerificationChoice.stillThere,
                     successMessage: 'Marked as still there.',
                   ),
                 ),
                 const SizedBox(height: 10),
                 PrimaryButton(
-                  label: '✅ It\'s Fixed!',
+                  label: _selectedChoice == _VerificationChoice.fixed
+                      ? '✓ ✅ It\'s Fixed!'
+                      : '✅ It\'s Fixed!',
                   loading: _verifying,
+                  isSecondary: _selectedChoice != _VerificationChoice.fixed,
                   onPressed: () => _verify(
                     isFixed: true,
+                    choice: _VerificationChoice.fixed,
                     successMessage: 'Marked as fixed. Thanks!',
                   ),
                 ),
                 const SizedBox(height: 10),
                 PrimaryButton(
-                  label: '⚠️ Got Worse',
+                  label: _selectedChoice == _VerificationChoice.gotWorse
+                      ? '✓ ⚠️ Got Worse'
+                      : '⚠️ Got Worse',
                   loading: _verifying,
-                  isSecondary: true,
+                  isSecondary: _selectedChoice != _VerificationChoice.gotWorse,
                   onPressed: () => _verify(
                     isFixed: false,
+                    choice: _VerificationChoice.gotWorse,
                     successMessage: 'Marked as getting worse.',
                   ),
                 ),
               ],
-          ),
+            ),
     );
   }
 
   Color _statusColor(String status) {
     final normalized = status.toLowerCase();
-    if (normalized == 'fixed' || normalized == 'closed' || normalized == 'resolved'){
+    if (normalized == 'fixed' || normalized == 'closed' || normalized == 'resolved') {
       return const Color(0xFF4ADE80);
     }
-    if(normalized == 'in_progress' || normalized == 'assigned'){
+    if (normalized == 'in_progress' || normalized == 'assigned') {
       return const Color(0xFF60A5FA);
     }
     return const Color(0xFFFBBF24);

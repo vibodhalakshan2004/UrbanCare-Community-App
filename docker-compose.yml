@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: urbancare-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-urbancare}
+      POSTGRES_USER: ${POSTGRES_USER:-urbancare}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-urbancare}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./Database:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-urbancare} -d ${POSTGRES_DB:-urbancare}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: urbancare-backend
+    restart: unless-stopped
+    env_file:
+      - ./Backend/.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://urbancare:urbancare@db:5432/urbancare}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/').read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        API_BASE_URL: ${FRONTEND_API_BASE_URL:-http://localhost:8000}
+    container_name: urbancare-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

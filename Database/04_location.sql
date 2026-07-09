@@ -12,9 +12,9 @@ CREATE TABLE locations (
     city VARCHAR(100),
     district VARCHAR(100),
     
-    -- The PostGIS spatial column for exact earth coordinates
-    geom GEOMETRY(POINT, 4326)
+    -- The PostGIS spatial column for exact earth coordinates (geography type for ST_DWithin/ST_Distance)
+    geog GEOGRAPHY(POINT, 4326)
 );
 
 -- 4. Rebuild the Spatial Index (CRITICAL)
-CREATE INDEX idx_locations_geom ON locations USING GIST (geom);
+CREATE INDEX idx_locations_geog ON locations USING GIST (geog);

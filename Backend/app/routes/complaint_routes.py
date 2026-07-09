@@ -2,7 +2,7 @@
 # APIRouter groups related endpoints
 # Depends injects dependencies like database or authentication
 # HTTPException is used for API error responses
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
 # SQLAlchemy database session
 from sqlalchemy.orm import Session
@@ -18,11 +18,12 @@ from uuid import UUID
 from app.database import get_db
 
 # Import schemas for request and response validation
-from app.schemas.complaint_schema import ComplaintCreate, ComplaintResponse
+from app.schemas.complaint_schema import ComplaintCreate, ComplaintResponse, ComplaintImageUploadResponse
 
 # Import service classes that contain business logic
 from app.services.complaint_service import ComplaintService
 from app.services.complaint_verification_service import ComplaintVerificationService
+from app.services.storage_service import StorageService
 
 # Import authentication dependency
 # This extracts the logged-in user from the JWT token
@@ -36,6 +37,24 @@ router = APIRouter(
     prefix="/complaints",
     tags=["Complaints"]
 )
+
+
+@router.post("/upload-image", response_model=ComplaintImageUploadResponse)
+async def upload_complaint_image(
+    image: UploadFile = File(...),
+    user=Depends(get_current_user),
+):
+    file_bytes = await image.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+    service = StorageService()
+    return service.upload_complaint_image(
+        user_id=user["user_id"],
+        filename=image.filename or "image.jpg",
+        content_type=image.content_type or "application/octet-stream",
+        file_bytes=file_bytes,
+    )
 
 
 # ------------------------------------------------------
@@ -70,13 +89,38 @@ def create_complaint(
 # Endpoint: GET /complaints
 # Returns all visible complaints
 @router.get("/", response_model=List[ComplaintResponse])
-def get_all_complaints(db: Session = Depends(get_db)):
+def get_all_complaints(
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
 
     # Create complaint service
     service = ComplaintService(db)
 
-    # Return complaint list
-    return service.get_all_complaints()
+    # Get complaints
+    complaints = service.get_all_complaints(citizen_id=user["user_id"])
+    
+    # Convert to response models with explicit location serialization
+    responses = []
+    for complaint in complaints:
+        response = ComplaintResponse.model_validate(complaint)
+        responses.append(response)
+    
+    return responses
+
+
+# ------------------------------------------------------
+# GET MY COMPLAINTS
+# ------------------------------------------------------
+# Endpoint: GET /complaints/my
+# Returns only the logged-in citizen's own complaints
+@router.get("/my", response_model=List[ComplaintResponse])
+def get_my_complaints(
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    service = ComplaintService(db)
+    return service.get_my_complaints(citizen_id=user["user_id"])
 
 
 # ------------------------------------------------------
@@ -90,6 +134,8 @@ def get_complaint(
     # Complaint ID from URL path
     complaint_id: UUID,
 
+    user = Depends(get_current_user),
+
     # Database session
     db: Session = Depends(get_db)
 ):
@@ -97,7 +143,7 @@ def get_complaint(
     service = ComplaintService(db)
 
     # Fetch complaint
-    complaint = service.get_complaint_by_id(complaint_id)
+    complaint = service.get_complaint_by_id(complaint_id, citizen_id=user["user_id"])
 
     # If complaint does not exist
     if not complaint:
@@ -106,7 +152,8 @@ def get_complaint(
             detail="Complaint not found"
         )
 
-    return complaint
+    # Convert to response model with explicit location serialization
+    return ComplaintResponse.model_validate(complaint)
 
 
 # ------------------------------------------------------
@@ -123,6 +170,9 @@ def verify_complaint(
     # Whether the issue is fixed
     is_fixed: bool,
 
+    # Optional detailed selection on client
+    feedback_type: str | None = None,
+
     # Authenticated user from JWT
     user = Depends(get_current_user),
 
@@ -137,5 +187,6 @@ def verify_complaint(
     return service.verify_complaint(
         complaint_id,
         user["user_id"],  # extracted from JWT
-        is_fixed
+        is_fixed,
+        feedback_type,
     )

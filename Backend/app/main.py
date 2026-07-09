@@ -1,5 +1,6 @@
 # Import FastAPI framework
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Import route files
 from app.routes import auth_routes
@@ -23,6 +24,15 @@ app = FastAPI(
     title="UrbanCare Backend",
     description="Backend API for complaint reporting system",
     version="1.0.0"
+)
+
+# Allow frontend apps (Flutter web/mobile) to access the API during development.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

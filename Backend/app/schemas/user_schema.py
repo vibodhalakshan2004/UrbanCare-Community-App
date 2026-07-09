@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 from uuid import UUID
 from enum import Enum
 
@@ -31,4 +32,8 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
-
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    password: Optional[str] = None
