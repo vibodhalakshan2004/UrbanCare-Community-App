@@ -11,11 +11,7 @@
     <application
         android:label="urbancare_frontend"
         android:name="${applicationName}"
-<<<<<<< HEAD
         android:icon="@mipmap/launcher_icon">
-=======
-        android:icon="@mipmap/ic_launcher">
->>>>>>> origin/main
         <activity
             android:name=".MainActivity"
             android:exported="true"

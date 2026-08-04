@@ -81,7 +81,6 @@ class AuthRepository {
     return _tokenStorage.clearSession();
   }
 
-<<<<<<< HEAD
   Future<UserModel> getProfile() {
     return _authService.fetchProfile();
   }
@@ -127,8 +126,6 @@ class AuthRepository {
     }
   }
 
-=======
->>>>>>> origin/main
   Map<String, dynamic> _decodeJwtPayload(String token) {
     final parts = token.split('.');
     if (parts.length != 3) {

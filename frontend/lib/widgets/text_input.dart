@@ -43,21 +43,13 @@ class _TextInputState extends State<TextInput> {
       keyboardType: widget.keyboardType,
       obscureText: _obscure,
       maxLines: widget.maxLines,
-<<<<<<< HEAD
       style: TextStyle(color: textColor),
-=======
-      style: const TextStyle(color: Colors.white),
->>>>>>> origin/main
       validator: widget.validator,
       decoration: InputDecoration(
         hintText: widget.hint,
         prefixIcon: widget.icon == null
             ? null
-<<<<<<< HEAD
             : Icon(widget.icon, color: context.onSurfaceVariant, size: 18),
-=======
-            : Icon(widget.icon, color: const Color(0xFF6B7280), size: 18),
->>>>>>> origin/main
         suffixIcon: widget.obscureText
             ? IconButton(
                 onPressed: () => setState(() => _obscure = !_obscure),

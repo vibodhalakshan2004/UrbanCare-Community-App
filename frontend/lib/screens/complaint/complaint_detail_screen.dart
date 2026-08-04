@@ -6,11 +6,8 @@ import 'package:urbancare_frontend/repositories/complaint_repository.dart';
 import 'package:urbancare_frontend/widgets/primary_button.dart';
 import 'package:urbancare_frontend/theme/app_theme.dart';
 
-<<<<<<< HEAD
 enum _VerificationChoice { fixed, stillThere, gotWorse }
 
-=======
->>>>>>> origin/main
 class ComplaintDetailScreen extends StatefulWidget {
   const ComplaintDetailScreen({
     super.key,
@@ -40,7 +37,6 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     _loadLatest();
   }
 
-<<<<<<< HEAD
   @override
   void dispose() {
     _mapController.dispose();
@@ -75,13 +71,6 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
       final fresh =
           await widget.complaintRepository.getComplaintById(_complaint.complaintId);
 
-=======
-  Future<void> _loadLatest() async {
-    try {
-      final fresh =
-          await widget.complaintRepository.getComplaintById(_complaint.complaintId);
-
->>>>>>> origin/main
       if (!mounted) return;
       setState(() {
         _complaint = ComplaintModel(
@@ -99,10 +88,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
           myVerification: fresh.myVerification,
           myFeedbackType: fresh.myFeedbackType,
         );
-<<<<<<< HEAD
         _selectedChoice = _choiceFromComplaint(_complaint);
-=======
->>>>>>> origin/main
       });
     } catch (_) {
       // Keep existing data on detail if fetch fails.

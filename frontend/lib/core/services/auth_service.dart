@@ -49,7 +49,6 @@ class AuthService {
 
     return token;
   }
-<<<<<<< HEAD
 
   Future<UserModel> fetchProfile() async {
     final response = await _apiClient.getJson(
@@ -78,6 +77,4 @@ class AuthService {
     );
     return UserModel.fromSignupJson(response);
   }
-=======
->>>>>>> origin/main
 }
