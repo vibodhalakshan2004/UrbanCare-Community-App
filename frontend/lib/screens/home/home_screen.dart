@@ -1,7 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as osm;
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart' as latlng;
 import 'package:urbancare_frontend/core/services/geofence_service.dart';
@@ -11,10 +9,10 @@ import 'package:urbancare_frontend/models/user.dart';
 import 'package:urbancare_frontend/repositories/auth_repository.dart';
 import 'package:urbancare_frontend/repositories/complaint_repository.dart';
 import 'package:urbancare_frontend/screens/complaint/complaint_detail_screen.dart';
-import 'package:urbancare_frontend/screens/complaint/create_complaint_screen.dart';
 import 'package:urbancare_frontend/screens/map/map_screen.dart';
 import 'package:urbancare_frontend/widgets/complaint_card.dart';
 import 'package:urbancare_frontend/widgets/primary_button.dart';
+import 'package:urbancare_frontend/theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -22,13 +20,13 @@ class HomeScreen extends StatefulWidget {
     required this.authRepository,
     required this.complaintRepository,
     required this.geofenceService,
-    required this.onSignOut,
+    required this.onCreateComplaint,
   });
 
   final AuthRepository authRepository;
   final ComplaintRepository complaintRepository;
   final AppGeofenceService geofenceService;
-  final VoidCallback onSignOut;
+  final VoidCallback onCreateComplaint;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -102,17 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _goToCreate() async {
-    final created = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => CreateComplaintScreen(
-          complaintRepository: widget.complaintRepository,
-        ),
-      ),
-    );
-
-    if (created == true) {
-      await _loadDashboard(showLoader: false);
-    }
+    widget.onCreateComplaint();
   }
 
   Future<void> _goToMap() async {
@@ -138,10 +126,6 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadDashboard(showLoader: false);
   }
 
-  Future<void> _signOut() async {
-    await widget.authRepository.logout();
-    widget.onSignOut();
-  }
 
   String _welcomeName() {
     final savedName = _user?.name.trim() ?? '';
@@ -160,59 +144,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Neighbour';
   }
 
-  LatLng _mapPreviewCenter() {
+  latlng.LatLng _mapPreviewCenter() {
     if (_mapCenter != null) {
-      return LatLng(_mapCenter!.latitude, _mapCenter!.longitude);
+      return latlng.LatLng(_mapCenter!.latitude, _mapCenter!.longitude);
     }
 
     for (final complaint in _nearby) {
       final location = complaint.location;
       if (location != null) {
-        return LatLng(location.latitude, location.longitude);
+        return latlng.LatLng(location.latitude, location.longitude);
       }
     }
 
-    return const LatLng(6.9271, 79.8612);
-  }
-
-  Set<Marker> _buildMapPreviewMarkers() {
-    final markers = <Marker>{};
-
-    if (_mapCenter != null) {
-      markers.add(
-        Marker(
-          markerId: const MarkerId('home_current_location'),
-          position: LatLng(_mapCenter!.latitude, _mapCenter!.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-          infoWindow: const InfoWindow(title: 'Current location'),
-        ),
-      );
-    }
-
-    for (final complaint in _nearby.take(20)) {
-      final location = complaint.location;
-      if (location == null) {
-        continue;
-      }
-
-      markers.add(
-        Marker(
-          markerId: MarkerId('home_${complaint.complaintId}'),
-          position: LatLng(location.latitude, location.longitude),
-          infoWindow: InfoWindow(
-            title: complaint.displayTitle,
-            snippet: complaint.status,
-          ),
-        ),
-      );
-    }
-
-    return markers;
-  }
-
-  latlng.LatLng _mapPreviewCenterOsm() {
-    final center = _mapPreviewCenter();
-    return latlng.LatLng(center.latitude, center.longitude);
+    return const latlng.LatLng(6.9271, 79.8612);
   }
 
   List<osm.Marker> _buildOsmMapPreviewMarkers() {
@@ -273,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Color(0xFF9CA3AF)),
+                  style: TextStyle(color: context.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
@@ -297,9 +241,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
+                  color: context.fill04,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  border: Border.all(color: context.borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,20 +257,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
+                            color: context.fill08,
                             borderRadius: BorderRadius.circular(30),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Community Platform',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFFC4C4C4),
+                              color: context.onSurfaceVariant,
                             ),
                           ),
-                        ),
-                        TextButton(
-                          onPressed: _signOut,
-                          child: const Text('Sign out'),
                         ),
                       ],
                     ),
@@ -341,7 +281,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(13),
                           ),
-                          child: const Text('🏙️', style: TextStyle(fontSize: 22)),
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.asset('assets/images/app_icon.png', fit: BoxFit.cover),
                         ),
                         const SizedBox(width: 12),
                         Text(
@@ -356,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 6),
                     Text(
                       'Welcome back, ${_welcomeName()}',
-                      style: const TextStyle(color: Color(0xFF9CA3AF)),
+                      style: TextStyle(color: context.onSurfaceVariant),
                     ),
                     const SizedBox(height: 16),
                     PrimaryButton(
@@ -374,19 +315,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.03),
+                        color: context.fill04,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: context.fill08,
                         ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'MAP PREVIEW',
                             style: TextStyle(
-                              color: Color(0xFF6B7280),
+                              color: context.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
                               fontSize: 11,
                               letterSpacing: 1.0,
@@ -398,35 +339,23 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
                               child: IgnorePointer(
-                                child: kIsWeb
-                                    ? osm.FlutterMap(
-                                        options: osm.MapOptions(
-                                          initialCenter: _mapPreviewCenterOsm(),
-                                          initialZoom: 14,
-                                        ),
-                                        children: [
-                                          osm.TileLayer(
-                                            urlTemplate:
-                                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                            userAgentPackageName:
-                                                'com.urbancare.urbancare_frontend',
-                                          ),
-                                          osm.MarkerLayer(
-                                            markers: _buildOsmMapPreviewMarkers(),
-                                          ),
-                                        ],
-                                      )
-                                    : GoogleMap(
-                                        initialCameraPosition: CameraPosition(
-                                          target: _mapPreviewCenter(),
-                                          zoom: 14,
-                                        ),
-                                        markers: _buildMapPreviewMarkers(),
-                                        myLocationEnabled: _mapCenter != null,
-                                        myLocationButtonEnabled: false,
-                                        zoomControlsEnabled: false,
-                                        compassEnabled: false,
-                                      ),
+                                child: osm.FlutterMap(
+                                  options: osm.MapOptions(
+                                    initialCenter: _mapPreviewCenter(),
+                                    initialZoom: 14,
+                                  ),
+                                  children: [
+                                    osm.TileLayer(
+                                      urlTemplate:
+                                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      userAgentPackageName:
+                                          'com.urbancare.urbancare_frontend',
+                                    ),
+                                    osm.MarkerLayer(
+                                      markers: _buildOsmMapPreviewMarkers(),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -446,12 +375,12 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 18),
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'NEARBY ALERTS',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
-                      color: Color(0xFF6B7280),
+                      color: context.onSurfaceVariant,
                       letterSpacing: 1.1,
                     ),
                   ),
@@ -462,14 +391,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: context.fill08,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       _nearby.length.toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFFA3A3A3),
+                        color: context.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -481,13 +410,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 30),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
+                    color: context.fill04,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    border: Border.all(color: context.fill08),
                   ),
-                  child: const Text(
+                  child: Text(
                     'No nearby alerts right now.',
-                    style: TextStyle(color: Color(0xFF9CA3AF)),
+                    style: TextStyle(color: context.onSurfaceVariant),
                   ),
                 )
               else

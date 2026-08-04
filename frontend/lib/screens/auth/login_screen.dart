@@ -121,7 +121,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Text('🏙️', style: TextStyle(fontSize: 22)),
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.asset('assets/images/app_icon.png', fit: BoxFit.cover),
                         ),
                         const SizedBox(width: 12),
                         Text(

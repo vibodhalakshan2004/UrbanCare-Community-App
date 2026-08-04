@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.models.user import User
+from app.models.citizen import Citizen
 from app.schemas.user_schema import UserSignup, UserLogin
 from app.utils.password import hash_password, verify_password
 from app.utils.jwt_handler import create_access_token
@@ -42,6 +43,14 @@ def create_user(db: Session, user_data: UserSignup):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    # If user role is citizen, create a corresponding citizen record
+    if user_data.role == "citizen":
+        citizen = Citizen(
+            user_id=new_user.user_id
+        )
+        db.add(citizen)
+        db.commit()
 
     return new_user
 

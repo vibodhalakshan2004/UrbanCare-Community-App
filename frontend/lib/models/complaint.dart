@@ -11,6 +11,10 @@ class ComplaintModel {
     this.location,
     this.distanceMeters,
     this.primaryImageUrl,
+    this.myVerification,
+    this.myFeedbackType,
+    this.verificationCount = 0,
+    this.notFixedCount = 0,
   });
 
   final String complaintId;
@@ -22,6 +26,10 @@ class ComplaintModel {
   final AppLocation? location;
   final double? distanceMeters;
   final String? primaryImageUrl;
+  final bool? myVerification;
+  final String? myFeedbackType;
+  final int verificationCount;
+  final int notFixedCount;
 
   String get displayTitle {
     return _issueTypeLabels[issueType] ?? issueType.replaceAll('_', ' ');
@@ -45,6 +53,21 @@ class ComplaintModel {
   }
 
   factory ComplaintModel.fromComplaintJson(Map<String, dynamic> json) {
+    final dynamic imageUrlsRaw = json['image_urls'];
+    final List<String> imageUrls = imageUrlsRaw is List
+        ? imageUrlsRaw.map((item) => item.toString()).where((item) => item.isNotEmpty).toList()
+        : const <String>[];
+
+    final String? primaryImageUrl =
+        json['primary_image_url']?.toString() ??
+        (imageUrls.isNotEmpty ? imageUrls.first : null);
+
+    // Parse location data from response
+    AppLocation? location;
+    if (json['location'] is Map<String, dynamic>) {
+      location = AppLocation.fromJson(json['location']);
+    }
+
     return ComplaintModel(
       complaintId: (json['complaint_id'] ?? '').toString(),
       citizenId: json['citizen_id']?.toString(),
@@ -52,7 +75,12 @@ class ComplaintModel {
       issueType: (json['issue_type'] ?? 'other').toString(),
       description: (json['description'] ?? '').toString(),
       status: (json['status'] ?? 'created').toString(),
-      primaryImageUrl: json['primary_image_url']?.toString(),
+      primaryImageUrl: primaryImageUrl,
+      location: location,
+      myVerification: json['my_verification'] as bool?,
+      myFeedbackType: json['my_feedback_type']?.toString(),
+      verificationCount: (json['verification_count'] as num?)?.toInt() ?? 0,
+      notFixedCount: (json['not_fixed_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -75,6 +103,8 @@ class ComplaintModel {
       distanceMeters:
           (json['distance_m'] as num?)?.toDouble() ??
               (json['distance'] as num?)?.toDouble(),
+      myVerification: null,
+      myFeedbackType: null,
     );
   }
 }

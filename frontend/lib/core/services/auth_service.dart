@@ -49,4 +49,32 @@ class AuthService {
 
     return token;
   }
+
+  Future<UserModel> fetchProfile() async {
+    final response = await _apiClient.getJson(
+      '/auth/me',
+      authRequired: true,
+    );
+    return UserModel.fromSignupJson(response);
+  }
+
+  Future<UserModel> updateProfile({
+    String? name,
+    String? email,
+    String? phoneNumber,
+    String? password,
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (email != null) body['email'] = email;
+    if (phoneNumber != null) body['phone_number'] = phoneNumber;
+    if (password != null && password.isNotEmpty) body['password'] = password;
+
+    final response = await _apiClient.putJson(
+      '/auth/me',
+      authRequired: true,
+      body: body,
+    );
+    return UserModel.fromSignupJson(response);
+  }
 }

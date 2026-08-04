@@ -14,11 +14,11 @@ class Citizen(Base):
         primary_key=True
     )
 
-    phone_number = Column(String(15))
-
     address = Column(String)
 
     date_of_birth = Column(Date)
+
+    fcm_token = Column(String)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

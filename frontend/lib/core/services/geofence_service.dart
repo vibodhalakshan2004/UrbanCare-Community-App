@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -5,6 +6,7 @@ import 'package:geofence_service/geofence_service.dart' as geofence;
 import 'package:urbancare_frontend/core/config/env.dart';
 import 'package:urbancare_frontend/core/services/complaint_service.dart';
 import 'package:urbancare_frontend/core/services/location_service.dart';
+import 'package:urbancare_frontend/core/services/notification_tracker.dart';
 import 'package:urbancare_frontend/models/complaint.dart';
 
 class AppGeofenceService {
@@ -29,10 +31,17 @@ class AppGeofenceService {
   final geofence.GeofenceService _engine;
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
+  final NotificationTracker _notificationTracker = NotificationTracker();
 
   final Map<String, ComplaintModel> _complaintsById = {};
 
   bool _initialized = false;
+  bool _notificationsEnabled = true;
+  Timer? _refreshTimer;
+
+  void setNotificationsEnabled(bool enabled) {
+    _notificationsEnabled = enabled;
+  }
 
   Future<void> initialize() async {
     if (_initialized) {
@@ -61,14 +70,32 @@ class AppGeofenceService {
   Future<List<ComplaintModel>> refreshNearbyAndStart() async {
     await initialize();
 
-    final userLocation = await _locationService.getCurrentAppLocation();
-    final nearby = await _complaintService.fetchNearbyComplaints(
-      lat: userLocation.latitude,
-      lng: userLocation.longitude,
+    // Cancel any existing refresh timer
+    _refreshTimer?.cancel();
+
+    // Perform initial refresh
+    await _performRefresh();
+
+    // Refresh every 10 minutes to catch new complaints
+    _refreshTimer = Timer.periodic(
+      const Duration(minutes: 10),
+      (_) => _performRefresh(),
     );
 
-    await _registerGeofences(nearby);
-    return nearby;
+    return _complaintsById.values.toList();
+  }
+
+  Future<void> _performRefresh() async {
+    try {
+      final userLocation = await _locationService.getCurrentAppLocation();
+      final nearby = await _complaintService.fetchNearbyComplaints(
+        lat: userLocation.latitude,
+        lng: userLocation.longitude,
+      );
+      await _registerGeofences(nearby);
+    } catch (e) {
+      // Silently ignore refresh errors to allow app to continue functioning
+    }
   }
 
   Future<void> _registerGeofences(List<ComplaintModel> complaints) async {
@@ -116,15 +143,28 @@ class AppGeofenceService {
     geofence.GeofenceStatus geofenceStatus,
     geofence.Location location,
   ) async {
+    if (!_notificationsEnabled) {
+      return;
+    }
+
     if (geofenceStatus != geofence.GeofenceStatus.ENTER &&
         geofenceStatus != geofence.GeofenceStatus.DWELL) {
       return;
     }
 
-    final complaint = _complaintsById[geofenceData.id.toString()];
+    final complaintId = geofenceData.id.toString();
+    final complaint = _complaintsById[complaintId];
     if (complaint == null) {
       return;
     }
+
+    // Check if we should notify for this complaint
+    if (!_notificationTracker.shouldNotify(complaintId)) {
+      return;
+    }
+
+    // Mark as notified to prevent duplicates
+    _notificationTracker.markNotified(complaintId);
 
     final meters = geofenceRadius.length.toInt();
     final body = '${complaint.displayTitle} reported ${meters}m ahead';
@@ -161,6 +201,7 @@ class AppGeofenceService {
   }
 
   Future<void> dispose() async {
+    _refreshTimer?.cancel();
     _engine.removeGeofenceStatusChangeListener(_onGeofenceStatusChanged);
     _engine.removeStreamErrorListener(_onGeofenceError);
     _engine.clearAllListeners();

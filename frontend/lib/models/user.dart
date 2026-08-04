@@ -29,6 +29,7 @@ class UserModel {
       name: data['name'] ?? '',
       email: data['email'] ?? '',
       role: data['role'] ?? 'citizen',
+      phoneNumber: data['phone'],
     );
   }
 }

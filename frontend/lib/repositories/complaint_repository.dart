@@ -1,6 +1,5 @@
 import 'package:image_picker/image_picker.dart';
 import 'package:urbancare_frontend/core/services/complaint_service.dart';
-import 'package:urbancare_frontend/core/services/firebase_service.dart';
 import 'package:urbancare_frontend/core/services/location_service.dart';
 import 'package:urbancare_frontend/models/complaint.dart';
 import 'package:urbancare_frontend/models/location.dart';
@@ -9,16 +8,13 @@ import 'package:urbancare_frontend/repositories/auth_repository.dart';
 class ComplaintRepository {
   ComplaintRepository({
     required ComplaintService complaintService,
-    required FirebaseService firebaseService,
     required LocationService locationService,
     required AuthRepository authRepository,
   })  : _complaintService = complaintService,
-        _firebaseService = firebaseService,
         _locationService = locationService,
         _authRepository = authRepository;
 
   final ComplaintService _complaintService;
-  final FirebaseService _firebaseService;
   final LocationService _locationService;
   final AuthRepository _authRepository;
 
@@ -43,6 +39,10 @@ class ComplaintRepository {
     return _locationService.getCurrentAppLocation();
   }
 
+  Future<AppLocation> getFreshCurrentLocation() {
+    return _locationService.getFreshCurrentAppLocation();
+  }
+
   Future<ComplaintModel> createComplaint({
     required String issueType,
     required String title,
@@ -61,10 +61,7 @@ class ComplaintRepository {
           fallbackAddress: 'Current device location',
         );
 
-    final imageUrl = await _firebaseService.uploadComplaintImage(
-      image: image,
-      userId: user.userId,
-    );
+    final imageUrl = await _complaintService.uploadComplaintImage(image: image);
 
     final payloadDescription = title.trim().isEmpty
         ? description
@@ -82,6 +79,7 @@ class ComplaintRepository {
   Future<ComplaintModel> verifyComplaint({
     required String complaintId,
     required bool isFixed,
+    required String feedbackType,
   }) async {
     final user = await _authRepository.getSavedUser();
     if (user == null || user.userId.isEmpty) {
@@ -91,6 +89,11 @@ class ComplaintRepository {
     return _complaintService.verifyComplaint(
       complaintId: complaintId,
       isFixed: isFixed,
+      feedbackType: feedbackType,
     );
+  }
+
+  Future<List<ComplaintModel>> getMyComplaints() {
+    return _complaintService.fetchMyComplaints();
   }
 }

@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:urbancare_frontend/core/api/api_client.dart';
 import 'package:urbancare_frontend/models/complaint.dart';
 import 'package:urbancare_frontend/models/location.dart';
@@ -6,6 +7,26 @@ class ComplaintService {
   ComplaintService(this._apiClient);
 
   final ApiClient _apiClient;
+
+  Future<String?> uploadComplaintImage({required XFile? image}) async {
+    if (image == null) {
+      return null;
+    }
+
+    final bytes = await image.readAsBytes();
+    final filename = image.name.isEmpty ? 'image.jpg' : image.name;
+
+    final response = await _apiClient.postMultipart(
+      '/complaints/upload-image',
+      fieldName: 'image',
+      filename: filename,
+      bytes: bytes,
+      authRequired: true,
+    );
+
+    final imageUrl = (response['image_url'] ?? '').toString();
+    return imageUrl.isEmpty ? null : imageUrl;
+  }
 
   Future<ComplaintModel> createComplaint({
     required String issueType,
@@ -55,12 +76,14 @@ class ComplaintService {
   Future<ComplaintModel> verifyComplaint({
     required String complaintId,
     required bool isFixed,
+    required String feedbackType,
   }) async {
     final response = await _apiClient.postJson(
       '/complaints/$complaintId/verify',
       authRequired: true,
       queryParams: {
         'is_fixed': isFixed.toString(),
+        'feedback_type': feedbackType,
       },
       body: const {},
     );
@@ -83,6 +106,20 @@ class ComplaintService {
     return response
         .whereType<Map<dynamic, dynamic>>()
         .map((item) => ComplaintModel.fromNearbyJson(
+              Map<String, dynamic>.from(item),
+            ))
+        .toList();
+  }
+
+  Future<List<ComplaintModel>> fetchMyComplaints() async {
+    final response = await _apiClient.getList(
+      '/complaints/my',
+      authRequired: true,
+    );
+
+    return response
+        .whereType<Map<dynamic, dynamic>>()
+        .map((item) => ComplaintModel.fromComplaintJson(
               Map<String, dynamic>.from(item),
             ))
         .toList();

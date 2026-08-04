@@ -81,6 +81,51 @@ class AuthRepository {
     return _tokenStorage.clearSession();
   }
 
+  Future<UserModel> getProfile() {
+    return _authService.fetchProfile();
+  }
+
+  Future<UserModel> updateProfile({
+    String? name,
+    String? email,
+    String? phoneNumber,
+    String? password,
+  }) async {
+    final updated = await _authService.updateProfile(
+      name: name,
+      email: email,
+      phoneNumber: phoneNumber,
+      password: password,
+    );
+    // Cache locally so getSavedUser returns latest data
+    await updateLocalSession(
+      name: updated.name,
+      email: updated.email,
+      phone: updated.phoneNumber ?? '',
+    );
+    return updated;
+  }
+
+  Future<void> updateLocalSession({
+    required String name,
+    required String email,
+    required String phone,
+  }) async {
+    await _tokenStorage.savePhone(phone);
+    // Overwrite name/email using the existing session keys
+    final session = await _tokenStorage.getSession();
+    await _tokenStorage.saveSession(
+      token: session['token'] ?? '',
+      userId: session['userId'] ?? '',
+      name: name,
+      email: email,
+      role: session['role'] ?? 'citizen',
+    );
+    if (phone.isNotEmpty) {
+      await _tokenStorage.savePhone(phone);
+    }
+  }
+
   Map<String, dynamic> _decodeJwtPayload(String token) {
     final parts = token.split('.');
     if (parts.length != 3) {

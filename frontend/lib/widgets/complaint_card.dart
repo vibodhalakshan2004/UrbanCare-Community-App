@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:urbancare_frontend/models/complaint.dart';
+import 'package:urbancare_frontend/theme/app_theme.dart';
 
 class ComplaintCard extends StatelessWidget {
   const ComplaintCard({
     super.key,
     required this.complaint,
     this.onTap,
+    this.showReactions = false,
   });
 
   final ComplaintModel complaint;
   final VoidCallback? onTap;
+  final bool showReactions;
 
   @override
   Widget build(BuildContext context) {
@@ -21,9 +24,9 @@ class ComplaintCard extends StatelessWidget {
       child: Ink(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.04),
+          color: context.fill04,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: context.borderColor),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +36,7 @@ class ComplaintCard extends StatelessWidget {
               height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: context.fill08,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(complaint.emoji, style: const TextStyle(fontSize: 22)),
@@ -67,7 +70,7 @@ class ComplaintCard extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          complaint.status,
+                          _displayStatus(complaint.status),
                           style: TextStyle(
                             color: statusColor,
                             fontSize: 11,
@@ -80,20 +83,38 @@ class ComplaintCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     complaint.shortDescription,
-                    style: const TextStyle(
-                      color: Color(0xFF9CA3AF),
+                    style: TextStyle(
+                      color: context.onSurfaceVariant,
                       fontSize: 13,
                       height: 1.45,
                     ),
                   ),
                   if (complaint.location?.address != null) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       '📍 ${complaint.location!.address}',
-                      style: const TextStyle(
-                        color: Color(0xFF6B7280),
+                      style: TextStyle(
+                        color: context.onSurfaceVariant,
                         fontSize: 12,
                       ),
+                    ),
+                  ],
+                  if (showReactions) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _reactionChip(
+                          icon: '✅',
+                          label: '${complaint.verificationCount} Fixed',
+                          color: const Color(0xFF4ADE80),
+                        ),
+                        const SizedBox(width: 8),
+                        _reactionChip(
+                          icon: '😐',
+                          label: '${complaint.notFixedCount} Still there',
+                          color: const Color(0xFFFBBF24),
+                        ),
+                      ],
                     ),
                   ],
                 ],
@@ -103,6 +124,43 @@ class ComplaintCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _reactionChip({
+    required String icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        '$icon $label',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  String _displayStatus(String status) {
+    final map = {
+      'created': 'Created',
+      'verified': 'Verified',
+      'assigned': 'Assigned',
+      'in_progress': 'In Progress',
+      'fixed': 'Fixed ✅',
+      'closed': 'Closed',
+      'rejected': 'Rejected',
+      'pending': 'Pending',
+    };
+    return map[status.toLowerCase()] ?? status;
   }
 
   Color _statusColor(String status) {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:urbancare_frontend/core/utils/token_storage.dart';
@@ -39,6 +40,24 @@ class ApiClient {
     return _decodeMapResponse(response);
   }
 
+  Future<Map<String, dynamic>> putJson(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authRequired = false,
+    Map<String, String>? queryParams,
+  }) async {
+    final uri = _buildUri(path, queryParams: queryParams);
+    final headers = await _buildHeaders(authRequired: authRequired);
+
+    final response = await http.put(
+      uri,
+      headers: headers,
+      body: jsonEncode(body ?? <String, dynamic>{}),
+    );
+
+    return _decodeMapResponse(response);
+  }
+
   Future<List<dynamic>> getList(
     String path, {
     bool authRequired = false,
@@ -65,6 +84,35 @@ class ApiClient {
       statusCode: 500,
       message: 'Unexpected list response from server.',
     );
+  }
+
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required String fieldName,
+    required String filename,
+    required Uint8List bytes,
+    bool authRequired = false,
+    Map<String, String>? queryParams,
+  }) async {
+    final uri = _buildUri(path, queryParams: queryParams);
+    final headers = await _buildHeaders(authRequired: authRequired);
+
+    final request = http.MultipartRequest('POST', uri)
+      ..headers.addAll(headers)
+      ..files.add(
+        http.MultipartFile.fromBytes(
+          fieldName,
+          bytes,
+          filename: filename,
+        ),
+      );
+
+    // Let multipart request set content-type with boundary.
+    request.headers.remove('Content-Type');
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    return _decodeMapResponse(response);
   }
 
   Uri _buildUri(String path, {Map<String, String>? queryParams}) {

@@ -26,6 +26,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Allow frontend apps (Flutter web/mobile) to access the API during development.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Allow browser clients running on localhost during development.
 app.add_middleware(

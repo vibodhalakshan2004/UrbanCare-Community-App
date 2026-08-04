@@ -6,6 +6,9 @@ class TokenStorage {
   static const _nameKey = 'uc_name';
   static const _emailKey = 'uc_email';
   static const _roleKey = 'uc_role';
+  static const _phoneKey = 'uc_phone';
+  static const _themeModeKey = 'uc_theme_mode';
+  static const _notificationEnabledKey = 'uc_notifications_enabled';
 
   static const _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -36,7 +39,40 @@ class TokenStorage {
       'name': await _storage.read(key: _nameKey),
       'email': await _storage.read(key: _emailKey),
       'role': await _storage.read(key: _roleKey),
+      'phone': await _storage.read(key: _phoneKey),
     };
+  }
+
+  Future<void> savePhone(String phone) {
+    return _storage.write(key: _phoneKey, value: phone);
+  }
+
+  Future<String?> getPhone() {
+    return _storage.read(key: _phoneKey);
+  }
+
+  Future<void> saveThemeMode(String value) {
+    return _storage.write(key: _themeModeKey, value: value);
+  }
+
+  Future<String?> getThemeMode() {
+    return _storage.read(key: _themeModeKey);
+  }
+
+  Future<void> saveNotificationEnabled(bool enabled) {
+    return _storage.write(
+      key: _notificationEnabledKey,
+      value: enabled ? 'true' : 'false',
+    );
+  }
+
+  Future<bool?> getNotificationEnabled() async {
+    final value = await _storage.read(key: _notificationEnabledKey);
+    if (value == null) {
+      return null;
+    }
+
+    return value == 'true';
   }
 
   Future<void> clearSession() async {
@@ -45,5 +81,6 @@ class TokenStorage {
     await _storage.delete(key: _nameKey);
     await _storage.delete(key: _emailKey);
     await _storage.delete(key: _roleKey);
+    await _storage.delete(key: _phoneKey);
   }
 }
