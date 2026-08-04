@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:urbancare_frontend/theme/app_theme.dart';
+=======
+>>>>>>> origin/main
 
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
@@ -25,15 +28,26 @@ class PrimaryButton extends StatelessWidget {
         onPressed: enabled ? onPressed : null,
         style: ElevatedButton.styleFrom(
           backgroundColor:
+<<<<<<< HEAD
               isSecondary ? context.fill08 : context.onSurface,
           foregroundColor: isSecondary ? context.onSurfaceVariant : Theme.of(context).scaffoldBackgroundColor,
           disabledBackgroundColor: context.fill04,
           disabledForegroundColor: context.onSurfaceVariant.withValues(alpha: 0.5),
+=======
+              isSecondary ? Colors.white.withValues(alpha: 0.08) : Colors.white,
+          foregroundColor: isSecondary ? Colors.white70 : const Color(0xFF080808),
+          disabledBackgroundColor: Colors.white.withValues(alpha: 0.2),
+          disabledForegroundColor: Colors.white54,
+>>>>>>> origin/main
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
               color: isSecondary
+<<<<<<< HEAD
                   ? context.borderColor
+=======
+                  ? Colors.white.withValues(alpha: 0.16)
+>>>>>>> origin/main
                   : Colors.transparent,
             ),
           ),

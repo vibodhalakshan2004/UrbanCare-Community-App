@@ -1,6 +1,10 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
+<<<<<<< HEAD
+=======
+    id("com.google.gms.google-services")
+>>>>>>> origin/main
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -13,7 +17,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+<<<<<<< HEAD
         isCoreLibraryDesugaringEnabled = true
+=======
+>>>>>>> origin/main
     }
 
     kotlinOptions {
@@ -41,10 +48,13 @@ android {
     }
 }
 
+<<<<<<< HEAD
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
 
+=======
+>>>>>>> origin/main
 flutter {
     source = "../.."
 }

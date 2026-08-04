@@ -67,6 +67,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
   }) async {
     setState(() => _loadingLocation = true);
     try {
+<<<<<<< HEAD
       final location = requireFresh
           ? await widget.complaintRepository.getFreshCurrentLocation()
           : await widget.complaintRepository.getCurrentLocation();
@@ -76,6 +77,13 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
         if (forceSelectCurrent) {
           _selectedLocation = location;
         } else if (_manualLocationMode) {
+=======
+      final location = await widget.complaintRepository.getCurrentLocation();
+      if (!mounted) return;
+      setState(() {
+        _location = location;
+        if (_manualLocationMode) {
+>>>>>>> origin/main
           _selectedLocation ??= location;
         } else {
           _selectedLocation = location;
@@ -147,6 +155,43 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
     _selectLocation(target.latitude, target.longitude);
   }
 
+<<<<<<< HEAD
+=======
+  void _selectLocationOnOsmMap(latlng.LatLng target) {
+    _selectLocation(target.latitude, target.longitude);
+  }
+
+  Set<Marker> _buildLocationMarkers() {
+    final markers = <Marker>{};
+
+    if (_location != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('current_location'),
+          position: LatLng(_location!.latitude, _location!.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          infoWindow: const InfoWindow(title: 'Current location'),
+        ),
+      );
+    }
+
+    if (_selectedLocation != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('selected_location'),
+          position: LatLng(
+            _selectedLocation!.latitude,
+            _selectedLocation!.longitude,
+          ),
+          infoWindow: const InfoWindow(title: 'Selected report location'),
+        ),
+      );
+    }
+
+    return markers;
+  }
+
+>>>>>>> origin/main
   List<osm.Marker> _buildOsmLocationMarkers() {
     final markers = <osm.Marker>[];
 
@@ -337,7 +382,11 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                               _selectedLocation == null
                                   ? 'Location unavailable'
                                   : _formatCoordinates(_selectedLocation!),
+<<<<<<< HEAD
                               style: TextStyle(color: context.onSurfaceVariant),
+=======
+                              style: const TextStyle(color: Color(0xFFD1D5DB)),
+>>>>>>> origin/main
                             ),
                           ),
                           Container(
@@ -346,13 +395,22 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
+<<<<<<< HEAD
                               color: context.fill08,
+=======
+                              color: Colors.white.withValues(alpha: 0.06),
+>>>>>>> origin/main
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               _manualLocationMode ? 'Manual' : 'Current',
+<<<<<<< HEAD
                               style: TextStyle(
                                 color: context.onSurfaceVariant,
+=======
+                              style: const TextStyle(
+                                color: Color(0xFF9CA3AF),
+>>>>>>> origin/main
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -414,6 +472,7 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                               ),
                             ),
                           )
+<<<<<<< HEAD
                         : osm.FlutterMap(
                             key: ValueKey<String>(
                               '${(_mapCenter ?? latlng.LatLng((_selectedLocation ?? _location!).latitude, (_selectedLocation ?? _location!).longitude)).latitude.toStringAsFixed(6)}:'
@@ -442,6 +501,45 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
                               osm.MarkerLayer(markers: _buildOsmLocationMarkers()),
                             ],
                           ),
+=======
+                        : kIsWeb
+                            ? osm.FlutterMap(
+                                options: osm.MapOptions(
+                                  initialCenter: latlng.LatLng(
+                                    (_selectedLocation ?? _location!).latitude,
+                                    (_selectedLocation ?? _location!).longitude,
+                                  ),
+                                  initialZoom: 16,
+                                  onTap: _manualLocationMode
+                                      ? (_, point) => _selectLocationOnOsmMap(point)
+                                      : null,
+                                ),
+                                children: [
+                                  osm.TileLayer(
+                                    urlTemplate:
+                                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                    userAgentPackageName:
+                                        'com.urbancare.urbancare_frontend',
+                                  ),
+                                  osm.MarkerLayer(markers: _buildOsmLocationMarkers()),
+                                ],
+                              )
+                            : GoogleMap(
+                                initialCameraPosition: CameraPosition(
+                                  target: LatLng(
+                                    (_selectedLocation ?? _location!).latitude,
+                                    (_selectedLocation ?? _location!).longitude,
+                                  ),
+                                  zoom: 16,
+                                ),
+                                markers: _buildLocationMarkers(),
+                                myLocationEnabled: _location != null,
+                                myLocationButtonEnabled: false,
+                                onTap: _manualLocationMode
+                                    ? _selectLocationOnGoogleMap
+                                    : null,
+                              ),
+>>>>>>> origin/main
               ),
               const SizedBox(height: 6),
               Text(

@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import 'package:image_picker/image_picker.dart';
+=======
+>>>>>>> origin/main
 import 'package:urbancare_frontend/core/api/api_client.dart';
 import 'package:urbancare_frontend/models/complaint.dart';
 import 'package:urbancare_frontend/models/location.dart';
@@ -8,6 +11,7 @@ class ComplaintService {
 
   final ApiClient _apiClient;
 
+<<<<<<< HEAD
   Future<String?> uploadComplaintImage({required XFile? image}) async {
     if (image == null) {
       return null;
@@ -28,6 +32,8 @@ class ComplaintService {
     return imageUrl.isEmpty ? null : imageUrl;
   }
 
+=======
+>>>>>>> origin/main
   Future<ComplaintModel> createComplaint({
     required String issueType,
     required String title,
@@ -76,14 +82,20 @@ class ComplaintService {
   Future<ComplaintModel> verifyComplaint({
     required String complaintId,
     required bool isFixed,
+<<<<<<< HEAD
     required String feedbackType,
+=======
+>>>>>>> origin/main
   }) async {
     final response = await _apiClient.postJson(
       '/complaints/$complaintId/verify',
       authRequired: true,
       queryParams: {
         'is_fixed': isFixed.toString(),
+<<<<<<< HEAD
         'feedback_type': feedbackType,
+=======
+>>>>>>> origin/main
       },
       body: const {},
     );
@@ -110,6 +122,7 @@ class ComplaintService {
             ))
         .toList();
   }
+<<<<<<< HEAD
 
   Future<List<ComplaintModel>> fetchMyComplaints() async {
     final response = await _apiClient.getList(
@@ -124,4 +137,6 @@ class ComplaintService {
             ))
         .toList();
   }
+=======
+>>>>>>> origin/main
 }

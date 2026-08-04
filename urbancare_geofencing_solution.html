@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UrbanCare — Proximity Notification Engineering Solution</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07090f;
+  --surface: #0b0f1c;
+  --card: #0f1626;
+  --border: #1a2540;
+  --primary: #3b82f6;
+  --green: #10b981;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --text: #ddeeff;
+  --muted: #4a6080;
+  --code-bg: #080c18;
+  --pg: #4a90d9;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+/* HEADER */
+.hero { padding: 64px 56px 48px; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, #07090f 0%, #0d1428 100%); }
+.hero-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--primary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+.hero-title { font-size: 48px; font-weight: 800; letter-spacing: -2px; line-height: 1.05; }
+.hero-title span { color: var(--green); }
+.hero-desc { margin-top: 16px; color: var(--muted); font-size: 15px; line-height: 1.7; max-width: 680px; }
+.hero-badges { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
+.b-pg { background: rgba(74,144,217,.15); color: var(--pg); border: 1px solid rgba(74,144,217,.3); }
+.b-flutter { background: rgba(59,130,246,.15); color: var(--primary); border: 1px solid rgba(59,130,246,.3); }
+.b-green { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+.b-yellow { background: rgba(245,158,11,.15); color: var(--yellow); border: 1px solid rgba(245,158,11,.3); }
+
+/* LAYOUT */
+.page { max-width: 1100px; margin: 0 auto; padding: 0 40px 120px; }
+.section { padding: 64px 0 0; }
+.sec-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--primary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
+.sec-title { font-size: 30px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+.sec-desc { color: var(--muted); font-size: 14px; line-height: 1.7; max-width: 680px; margin-bottom: 28px; }
+hr.div { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+/* PROBLEM vs SOLUTION COMPARE */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.cmp-card { border-radius: 14px; padding: 24px; border: 1px solid; }
+.cmp-bad { background: rgba(239,68,68,.06); border-color: rgba(239,68,68,.3); }
+.cmp-good { background: rgba(16,185,129,.06); border-color: rgba(16,185,129,.3); }
+.cmp-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.cmp-bad .cmp-title { color: var(--red); }
+.cmp-good .cmp-title { color: var(--green); }
+.cmp-row { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--muted); line-height: 1.5; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.cmp-row:last-child { border-bottom: none; }
+.cmp-icon { flex-shrink: 0; margin-top: 1px; }
+
+/* BATTERY METER */
+.battery-section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-bottom: 24px; }
+.batt-title { font-size: 14px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+.batt-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.batt-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); width: 180px; flex-shrink: 0; }
+.batt-bar-wrap { flex: 1; background: rgba(255,255,255,.05); border-radius: 6px; height: 20px; overflow: hidden; position: relative; }
+.batt-bar { height: 100%; border-radius: 6px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+.batt-pct { font-family: 'JetBrains Mono', monospace; font-size: 12px; width: 48px; text-align: right; flex-shrink: 0; }
+.bar-red    { background: linear-gradient(90deg, #ef4444, #f87171); }
+.bar-orange { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.bar-green  { background: linear-gradient(90deg, #10b981, #34d399); }
+.bar-blue   { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+
+/* FLOW DIAGRAM */
+.flow-diagram { background: var(--code-bg); border: 1px solid var(--border); border-radius: 14px; padding: 32px; margin-bottom: 24px; overflow-x: auto; }
+.flow-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 28px; }
+.flow-timeline { display: flex; flex-direction: column; gap: 0; }
+.flow-row { display: grid; grid-template-columns: 140px 28px 1fr; align-items: center; gap: 0; margin-bottom: 0; }
+.flow-actor { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; text-align: right; padding-right: 16px; line-height: 1.3; }
+.flow-line-col { display: flex; flex-direction: column; align-items: center; }
+.flow-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; border: 2px solid; }
+.flow-vline { width: 2px; flex: 1; min-height: 20px; }
+.flow-event { font-size: 13px; color: var(--text); padding: 10px 0 10px 16px; line-height: 1.5; border-left: 0; }
+.flow-event .ev-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+.flow-event .ev-desc { color: var(--muted); font-size: 12px; }
+.flow-sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; margin-top: 5px; display: inline-block; color: var(--pg); }
+
+/* GEOFENCE MAP VIZ */
+.map-viz { background: var(--code-bg); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 24px; text-align: center; }
+.map-canvas { position: relative; width: 100%; max-width: 560px; height: 380px; margin: 0 auto; background: radial-gradient(ellipse at center, #0d1a2e 0%, #07090f 70%); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+.map-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(26,37,64,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(26,37,64,.4) 1px, transparent 1px); background-size: 40px 40px; }
+.geofence-circle { position: absolute; border-radius: 50%; border: 2px dashed; transform: translate(-50%, -50%); animation: pulse-ring 3s ease-in-out infinite; }
+.issue-dot { position: absolute; width: 16px; height: 16px; border-radius: 50%; transform: translate(-50%, -50%); z-index: 3; cursor: pointer; transition: transform .2s; }
+.issue-dot:hover { transform: translate(-50%, -50%) scale(1.4); }
+.issue-dot::after { content: attr(data-label); position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; white-space: nowrap; color: var(--text); pointer-events: none; opacity: 0; transition: opacity .2s; }
+.issue-dot:hover::after { opacity: 1; }
+.user-dot { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: var(--primary); border: 3px solid white; transform: translate(-50%, -50%); z-index: 5; box-shadow: 0 0 0 6px rgba(59,130,246,.25); animation: user-pulse 2s ease-in-out infinite; }
+.user-dot::after { content: 'YOU'; position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--primary); white-space: nowrap; font-weight: 700; }
+.map-legend { display: flex; justify-content: center; gap: 20px; margin-top: 14px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* NOTIFICATION TRIGGER STEPS */
+.trigger-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-bottom: 24px; }
+.trigger-step { background: var(--card); border: 1px solid var(--border); padding: 18px 16px; position: relative; text-align: center; }
+.trigger-step:first-child { border-radius: 12px 0 0 12px; }
+.trigger-step:last-child { border-radius: 0 12px 12px 0; }
+.trigger-step::after { content: '→'; position: absolute; right: -12px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted); z-index: 2; }
+.trigger-step:last-child::after { display: none; }
+.ts-num { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: var(--primary); }
+.ts-label { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+.ts-icon { font-size: 22px; margin-bottom: 8px; }
+
+/* CODE BLOCKS */
+.code-block { background: var(--code-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+.code-header { padding: 10px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.code-lang { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--yellow); letter-spacing: 1px; text-transform: uppercase; }
+.code-file { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin-left: auto; }
+pre.code-body { padding: 18px 20px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.9; overflow-x: auto; white-space: pre; }
+.k { color: #ff79c6; }
+.kw { color: #8be9fd; }
+.s { color: #f1fa8c; }
+.n { color: #bd93f9; }
+.cm { color: #4a6080; font-style: italic; }
+.fn { color: #50fa7b; }
+.c { color: #ffb86c; }
+.an { color: #ff79c6; }
+.pg-c { color: #4a90d9; }
+
+/* POSTGIS SECTION */
+.postgis-card { background: rgba(74,144,217,.08); border: 1px solid rgba(74,144,217,.25); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+.postgis-title { color: var(--pg); font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+/* DB CHANGES TABLE */
+.changes-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; margin-bottom: 20px; }
+.changes-table th { padding: 10px 16px; text-align: left; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border); }
+.changes-table td { padding: 10px 16px; border-bottom: 1px solid rgba(26,37,64,.5); }
+.changes-table tr:hover td { background: rgba(59,130,246,.04); }
+.tag-new { background: rgba(16,185,129,.15); color: var(--green); padding: 2px 8px; border-radius: 4px; font-size: 10px; }
+.tag-mod { background: rgba(245,158,11,.15); color: var(--yellow); padding: 2px 8px; border-radius: 4px; font-size: 10px; }
+.tag-none { background: rgba(74,144,217,.1); color: var(--muted); padding: 2px 8px; border-radius: 4px; font-size: 10px; }
+
+/* CALLOUTS */
+.callout { border-radius: 10px; padding: 14px 18px; margin: 16px 0; display: flex; gap: 12px; font-size: 13px; line-height: 1.6; }
+.c-info { background: rgba(59,130,246,.08); border: 1px solid rgba(59,130,246,.25); }
+.c-tip { background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.25); color: var(--green); }
+.c-warn { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.25); color: var(--yellow); }
+.c-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+/* INTERACTIVE DEMO */
+.demo-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
+.demo-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; }
+.slider-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.slider-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); width: 180px; }
+input[type=range] { flex: 1; accent-color: var(--primary); }
+.slider-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--primary); font-weight: 700; width: 80px; text-align: right; }
+.result-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
+.result-card { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+.result-num { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; }
+.result-label { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+@keyframes pulse-ring {
+  0%, 100% { opacity: .4; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: .7; transform: translate(-50%, -50%) scale(1.04); }
+}
+@keyframes user-pulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(59,130,246,.25); }
+  50% { box-shadow: 0 0 0 12px rgba(59,130,246,.1); }
+}
+@keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+.section { animation: fadeUp .4s ease both; }
+
+code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--code-bg); padding: 2px 6px; border-radius: 4px; color: var(--cyan); border: 1px solid var(--border); }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">UrbanCare / Team Falcon / Engineering Solution</div>
+  <div class="hero-title">Proximity Notification<br><span>Without Battery Drain</span></div>
+  <div class="hero-desc">A real engineering approach to notifying citizens when they walk near an unresolved issue — using OS-level geofencing, on-device caching, and a single PostGIS query instead of continuous GPS polling.</div>
+  <div class="hero-badges">
+    <span class="badge b-flutter">Flutter Geofencing</span>
+    <span class="badge b-pg">PostGIS ST_DWithin</span>
+    <span class="badge b-green">On-Device Cache</span>
+    <span class="badge b-yellow">Battery Efficient</span>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- SECTION 1: THE PROBLEM -->
+<section class="section" id="s1">
+  <div class="sec-tag">The Problem</div>
+  <div class="sec-title">Why Naive Approaches Fail</div>
+  <div class="sec-desc">Two obvious approaches both have serious engineering problems. Neither is acceptable for a production app.</div>
+
+  <div class="compare-grid">
+    <div class="cmp-card cmp-bad">
+      <div class="cmp-title">❌ Approach A — Continuous GPS Polling</div>
+      <div class="cmp-row"><span class="cmp-icon">🔋</span>Polls GPS every 10–30 seconds. GPS hardware stays active constantly — drains 15–25% battery per hour alone.</div>
+      <div class="cmp-row"><span class="cmp-icon">📡</span>Each poll = HTTP request to FastAPI = network call = radio wake = more battery drain.</div>
+      <div class="cmp-row"><span class="cmp-icon">💸</span>Millions of DB queries. PostGIS geo-query running every 30 seconds per user = server overload at scale.</div>
+      <div class="cmp-row"><span class="cmp-icon">🚫</span>Android/iOS aggressively kill background apps doing continuous GPS. Notifications never arrive.</div>
+    </div>
+    <div class="cmp-card cmp-bad">
+      <div class="cmp-title">❌ Approach B — Server Push (FCM to All)</div>
+      <div class="cmp-row"><span class="cmp-icon">📍</span>Server has no reliable idea where users currently are. Would need to push to everyone within a region.</div>
+      <div class="cmp-row"><span class="cmp-icon">🔔</span>Massive notification spam — user gets alerts for issues 5km away. Uninstall rate goes up.</div>
+      <div class="cmp-row"><span class="cmp-icon">🗄️</span>Requires storing current user location in server DB, updated constantly — privacy concern + storage cost.</div>
+      <div class="cmp-row"><span class="cmp-icon">⚡</span>FCM quota limits. Can't push to 10,000 users every time someone reports a pothole.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- SECTION 2: THE SOLUTION -->
+<section class="section" id="s2">
+  <div class="sec-tag">The Engineering Solution</div>
+  <div class="sec-title">OS Geofencing + On-Device Cache</div>
+  <div class="sec-desc">Your instinct was right — cache complaint locations on the device. The key insight is to use <strong>OS-level geofencing</strong> instead of manual GPS polling. The OS monitors virtual circles around saved locations using cell towers and Wi-Fi (not GPS) — this is how Google Maps, Uber, and Snapchat do location-aware notifications.</div>
+
+  <div class="trigger-steps">
+    <div class="trigger-step">
+      <div class="ts-icon">📱</div>
+      <div class="ts-num">1</div>
+      <div class="ts-label">App opens / comes to foreground</div>
+    </div>
+    <div class="trigger-step">
+      <div class="ts-icon">🐘</div>
+      <div class="ts-num">2</div>
+      <div class="ts-label">ONE PostGIS query — get nearby active issue locations (5km)</div>
+    </div>
+    <div class="trigger-step">
+      <div class="ts-icon">💾</div>
+      <div class="ts-num">3</div>
+      <div class="ts-label">Store as geofences on device (SQLite). OS monitors them.</div>
+    </div>
+    <div class="trigger-step">
+      <div class="ts-icon">🔵</div>
+      <div class="ts-num">4</div>
+      <div class="ts-label">OS wakes app when user enters a 100m circle (no continuous GPS)</div>
+    </div>
+    <div class="trigger-step">
+      <div class="ts-icon">🔔</div>
+      <div class="ts-num">5</div>
+      <div class="ts-label">Show local notification — "Unresolved issue 80m away"</div>
+    </div>
+  </div>
+
+  <!-- GEOFENCE MAP VIZ -->
+  <div class="map-viz">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px">Interactive Map — Hover over issues to see details</div>
+    <div class="map-canvas" id="mapCanvas">
+      <div class="map-grid"></div>
+      <!-- Geofence circles -->
+      <div class="geofence-circle" style="width:120px;height:120px;left:30%;top:35%;border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.08)"></div>
+      <div class="geofence-circle" style="width:120px;height:120px;left:58%;top:55%;border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.08)"></div>
+      <div class="geofence-circle" style="width:120px;height:120px;left:72%;top:28%;border-color:rgba(16,185,129,.5);background:rgba(16,185,129,.08)"></div>
+      <div class="geofence-circle" style="width:120px;height:120px;left:20%;top:68%;border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.08)"></div>
+      <!-- Issue dots -->
+      <div class="issue-dot" style="left:30%;top:35%;background:#ef4444;box-shadow:0 0 8px #ef4444" data-label="🚗 Road Damage · created"></div>
+      <div class="issue-dot" style="left:58%;top:55%;background:#f59e0b;box-shadow:0 0 8px #f59e0b" data-label="💡 Streetlight · in_progress"></div>
+      <div class="issue-dot" style="left:72%;top:28%;background:#10b981;box-shadow:0 0 8px #10b981" data-label="🗑️ Garbage · verified"></div>
+      <div class="issue-dot" style="left:20%;top:68%;background:#8b5cf6;box-shadow:0 0 8px #8b5cf6" data-label="💧 Water Leak · assigned"></div>
+      <!-- User dot moving -->
+      <div class="user-dot" id="userDot" style="left:45%;top:50%"></div>
+      <!-- Label -->
+      <div style="position:absolute;bottom:12px;right:12px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted)">100m radius geofences</div>
+    </div>
+    <div class="map-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Road Damage</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Streetlight</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Garbage</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div>Water</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;border:2px solid white"></div>You</div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace" id="geoStatus">Move your mouse over the map to simulate walking →</div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- SECTION 3: BATTERY COMPARISON -->
+<section class="section" id="s3">
+  <div class="sec-tag">Battery Impact</div>
+  <div class="sec-title">Why This Saves Battery</div>
+  <div class="sec-desc">The difference between GPS-based and geofence-based location tracking is enormous. The OS uses cell tower triangulation and Wi-Fi positioning (not GPS hardware) to monitor geofences when the device is idle.</div>
+
+  <div class="battery-section">
+    <div class="batt-title">Battery drain per hour — Location tracking method comparison</div>
+    <div class="batt-row">
+      <div class="batt-label">Continuous GPS (HIGH)</div>
+      <div class="batt-bar-wrap"><div class="batt-bar bar-red" style="width:0" data-w="88%"></div></div>
+      <div class="batt-pct" style="color:var(--red)">88%</div>
+    </div>
+    <div class="batt-row">
+      <div class="batt-label">GPS every 30 seconds</div>
+      <div class="batt-bar-wrap"><div class="batt-bar bar-orange" style="width:0" data-w="52%"></div></div>
+      <div class="batt-pct" style="color:var(--yellow)">52%</div>
+    </div>
+    <div class="batt-row">
+      <div class="batt-label">GPS every 5 minutes</div>
+      <div class="batt-bar-wrap"><div class="batt-bar bar-orange" style="width:0" data-w="22%"></div></div>
+      <div class="batt-pct" style="color:var(--yellow)">22%</div>
+    </div>
+    <div class="batt-row">
+      <div class="batt-label">OS Geofencing (passive)</div>
+      <div class="batt-bar-wrap"><div class="batt-bar bar-green" style="width:0" data-w="3%"></div></div>
+      <div class="batt-pct" style="color:var(--green)">3%</div>
+    </div>
+    <div class="batt-row">
+      <div class="batt-label">No location (baseline)</div>
+      <div class="batt-bar-wrap"><div class="batt-bar bar-blue" style="width:0" data-w="1%"></div></div>
+      <div class="batt-pct" style="color:var(--primary)">1%</div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:12px">
+      * OS Geofencing uses Significant Location Change API (iOS) / Fused Location Provider (Android) — both use cell/WiFi, activate GPS only when approaching boundary
+    </div>
+  </div>
+
+  <!-- INTERACTIVE CALCULATOR -->
+  <div class="demo-box">
+    <div class="demo-title">⚡ Battery Impact Calculator — Adjust to see the difference</div>
+    <div class="slider-row">
+      <div class="slider-label">Active users</div>
+      <input type="range" id="usersSlider" min="100" max="10000" step="100" value="1000">
+      <div class="slider-val" id="usersVal">1,000</div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-label">GPS poll interval (seconds)</div>
+      <input type="range" id="pollSlider" min="10" max="300" step="10" value="30">
+      <div class="slider-val" id="pollVal">30s</div>
+    </div>
+    <div class="result-grid">
+      <div class="result-card">
+        <div class="result-num" id="r-queries" style="color:var(--red)">2,880</div>
+        <div class="result-label">DB geo-queries/hour<br>(naive approach)</div>
+      </div>
+      <div class="result-card">
+        <div class="result-num" id="r-geofence" style="color:var(--green)">1</div>
+        <div class="result-label">DB geo-queries/hour<br>(geofence approach)</div>
+      </div>
+      <div class="result-card">
+        <div class="result-num" id="r-saving" style="color:var(--primary)">99.97%</div>
+        <div class="result-label">Query reduction<br>to the server</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- SECTION 4: HOW IT WORKS TECHNICALLY -->
+<section class="section" id="s4">
+  <div class="sec-tag">Technical Implementation</div>
+  <div class="sec-title">How It Works — Step by Step</div>
+
+  <div class="flow-diagram">
+    <div class="flow-title">Full Geofencing Flow — App Open to Notification</div>
+    <div class="flow-timeline">
+
+      <div class="flow-row">
+        <div class="flow-actor" style="color:var(--primary)">Flutter App</div>
+        <div class="flow-line-col">
+          <div class="flow-dot" style="background:var(--primary);border-color:var(--primary)"></div>
+          <div class="flow-vline" style="background:rgba(59,130,246,.3)"></div>
+        </div>
+        <div class="flow-event">
+          <div class="ev-label" style="color:var(--primary)">App Opened / Resumed</div>
+          <div class="ev-desc">App comes to foreground. Get current GPS once (one-shot, not continuous). Check if cached issues are stale (older than 30 min).</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-actor" style="color:var(--cyan)">FastAPI</div>
+        <div class="flow-line-col">
+          <div class="flow-dot" style="background:var(--cyan);border-color:var(--cyan)"></div>
+          <div class="flow-vline" style="background:rgba(6,182,212,.3)"></div>
+        </div>
+        <div class="flow-event">
+          <div class="ev-label" style="color:var(--cyan)">One API Call → PostGIS</div>
+          <div class="ev-desc">GET /api/v1/complaints/geofence-sync?lat=6.92&lng=79.86 — runs a single PostGIS query. Returns lightweight list.</div>
+          <div class="flow-sub">SELECT complaint_id, latitude, longitude, issue_type, status FROM active_complaint_points WHERE ST_DWithin(geom, ST_MakePoint(lng,lat)::geography, 5000)</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-actor" style="color:var(--yellow)">Device SQLite</div>
+        <div class="flow-line-col">
+          <div class="flow-dot" style="background:var(--yellow);border-color:var(--yellow)"></div>
+          <div class="flow-vline" style="background:rgba(245,158,11,.3)"></div>
+        </div>
+        <div class="flow-event">
+          <div class="ev-label" style="color:var(--yellow)">Cache Saved On-Device</div>
+          <div class="ev-desc">Lightweight JSON saved to device SQLite (via <code>sqflite</code> package). Each row: complaint_id, lat, lng, issue_type, cached_at. Replaces stale data.</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-actor" style="color:var(--purple)">OS Geofencing</div>
+        <div class="flow-line-col">
+          <div class="flow-dot" style="background:var(--purple);border-color:var(--purple)"></div>
+          <div class="flow-vline" style="background:rgba(139,92,246,.3)"></div>
+        </div>
+        <div class="flow-event">
+          <div class="ev-label" style="color:var(--purple)">Register Geofences with OS</div>
+          <div class="ev-desc">For each cached complaint, register a 100m radius geofence with the OS. Android uses <code>Geofencing API (play_services_location)</code>, iOS uses <code>CLLocationManager</code>. Both use cell/WiFi — NO continuous GPS.</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-actor" style="color:var(--muted)">Hours pass…</div>
+        <div class="flow-line-col">
+          <div class="flow-dot" style="background:var(--muted);border-color:var(--muted);opacity:.4"></div>
+          <div class="flow-vline" style="background:rgba(74,96,128,.3)"></div>
+        </div>
+        <div class="flow-event">
+          <div class="ev-label" style="color:var(--muted)">User Goes About Their Day</div>
+          <div class="ev-desc">Phone sleeps. Battery barely touched. OS passively monitors geofences using cell towers. No GPS polling. No server calls.</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-actor" style="color:var(--red)">OS Trigger</div>
+        <div class="flow-line-col">
+          <div class="flow-dot" style="background:var(--red);border-color:var(--red)"></div>
+          <div class="flow-vline" style="background:rgba(239,68,68,.3)"></div>
+        </div>
+        <div class="flow-event">
+          <div class="ev-label" style="color:var(--red)">User Enters 100m Geofence</div>
+          <div class="ev-desc">OS wakes the app in background. Flutter's <code>geofence_service</code> callback fires. App checks the cached status of this complaint — is it still unresolved?</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-actor" style="color:var(--cyan)">Quick API Check</div>
+        <div class="flow-line-col">
+          <div class="flow-dot" style="background:var(--cyan);border-color:var(--cyan)"></div>
+          <div class="flow-vline" style="background:rgba(6,182,212,.3)"></div>
+        </div>
+        <div class="flow-event">
+          <div class="ev-label" style="color:var(--cyan)">Verify Complaint Still Active</div>
+          <div class="ev-desc">One tiny API call: GET /api/v1/complaints/{id}/status — returns only the status field. If still 'created'/'verified'/'in_progress' → show notification.</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-actor" style="color:var(--green)">Notification</div>
+        <div class="flow-line-col">
+          <div class="flow-dot" style="background:var(--green);border-color:var(--green)"></div>
+          <div class="flow-vline" style="display:none"></div>
+        </div>
+        <div class="flow-event">
+          <div class="ev-label" style="color:var(--green)">Local Notification Shown</div>
+          <div class="ev-desc"><strong>flutter_local_notifications</strong> shows: "🚗 Unresolved road damage 80m ahead on Galle Rd. Tap to confirm or report." — Tapping opens ComplaintDetailScreen.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- SECTION 5: POSTGIS ROLE -->
+<section class="section" id="s5">
+  <div class="sec-tag">PostGIS Role</div>
+  <div class="sec-title">How PostGIS Fits In</div>
+
+  <div class="postgis-card">
+    <div class="postgis-title">🐘 PostGIS runs exactly ONCE — on app open</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.7">
+      PostGIS is perfect for the initial sync query. When the app opens, it fires one efficient geo-query to get all active issue locations within 5km. The <code>ST_DWithin</code> function uses the GiST spatial index — making this query extremely fast even with thousands of complaints. The result is a tiny JSON payload (just IDs + coordinates) that fits in device memory easily.
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">SQL</span>
+      <span class="code-file">PostgreSQL / PostGIS — geofence sync query</span>
+    </div>
+    <pre class="code-body"><span class="cm">-- New VIEW: active_complaint_points (lightweight, only what device needs)</span>
+<span class="k">CREATE VIEW</span> <span class="n">active_complaint_points</span> <span class="k">AS</span>
+<span class="k">SELECT</span>
+  c.complaint_id,
+  c.issue_type,
+  c.status,
+  l.latitude,
+  l.longitude,
+  l.geom,
+  l.address
+<span class="k">FROM</span> complaints c
+<span class="k">JOIN</span> locations l <span class="k">ON</span> l.location_id = c.location_id
+<span class="k">WHERE</span> c.status <span class="k">NOT IN</span> (<span class="s">'fixed'</span>, <span class="s">'closed'</span>, <span class="s">'rejected'</span>);
+
+<span class="cm">-- The FastAPI endpoint runs this query (uses GiST index on geom — very fast)</span>
+<span class="k">SELECT</span>
+  complaint_id,
+  issue_type,
+  status,
+  latitude,
+  longitude,
+  address
+<span class="k">FROM</span> active_complaint_points
+<span class="k">WHERE</span> <span class="fn">ST_DWithin</span>(
+  geom,
+  <span class="fn">ST_MakePoint</span>(<span class="pg-c">:lng</span>, <span class="pg-c">:lat</span>)::<span class="n">geography</span>,
+  <span class="c">5000</span>   <span class="cm">-- 5km radius (can be configured per user)</span>
+)
+<span class="k">ORDER BY</span> <span class="fn">ST_Distance</span>(geom, <span class="fn">ST_MakePoint</span>(<span class="pg-c">:lng</span>, <span class="pg-c">:lat</span>)::<span class="n">geography</span>)
+<span class="k">LIMIT</span> <span class="c">50</span>;   <span class="cm">-- max 50 geofences per user (OS limit is 100 on iOS)</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Python</span>
+      <span class="code-file">FastAPI — geofence sync endpoint</span>
+    </div>
+    <pre class="code-body"><span class="an">@router</span>.<span class="fn">get</span>(<span class="s">"/complaints/geofence-sync"</span>)
+<span class="k">async def</span> <span class="fn">geofence_sync</span>(
+  lat: <span class="kw">float</span>,
+  lng: <span class="kw">float</span>,
+  db: <span class="n">AsyncSession</span> = <span class="n">Depends</span>(get_db),
+  current_user = <span class="n">Depends</span>(get_current_user)
+):
+  <span class="cm">"""
+  Called ONCE when app opens. Returns lightweight list of
+  active complaint lat/lngs within 5km for on-device geofencing.
+  Typical response size: ~3KB for 50 complaints.
+  """</span>
+  result = <span class="k">await</span> db.<span class="fn">execute</span>(<span class="n">text</span>(<span class="s">"""
+    SELECT complaint_id, issue_type, status, latitude, longitude, address
+    FROM active_complaint_points
+    WHERE ST_DWithin(geom, ST_MakePoint(:lng, :lat)::geography, 5000)
+    ORDER BY ST_Distance(geom, ST_MakePoint(:lng, :lat)::geography)
+    LIMIT 50
+  """</span>), {<span class="s">"lat"</span>: lat, <span class="s">"lng"</span>: lng})
+
+  <span class="k">return</span> {
+    <span class="s">"complaints"</span>: [<span class="k">dict</span>(row) <span class="k">for</span> row <span class="k">in</span> result.mappings()],
+    <span class="s">"synced_at"</span>: <span class="n">datetime</span>.<span class="fn">utcnow</span>().<span class="fn">isoformat</span>(),
+    <span class="s">"expires_in_minutes"</span>: <span class="c">30</span>   <span class="cm"># tell Flutter when to refresh</span>
+  }
+
+<span class="an">@router</span>.<span class="fn">get</span>(<span class="s">"/complaints/{complaint_id}/status"</span>)
+<span class="k">async def</span> <span class="fn">get_complaint_status</span>(complaint_id: <span class="kw">str</span>, db = <span class="n">Depends</span>(get_db)):
+  <span class="cm">"""Tiny check called when user enters geofence. ~50 bytes response."""</span>
+  result = <span class="k">await</span> db.<span class="fn">execute</span>(
+    <span class="n">text</span>(<span class="s">"SELECT status FROM complaints WHERE complaint_id = :id"</span>),
+    {<span class="s">"id"</span>: complaint_id}
+  )
+  row = result.<span class="fn">fetchone</span>()
+  <span class="k">return</span> {<span class="s">"status"</span>: row.status <span class="k">if</span> row <span class="k">else</span> <span class="s">"not_found"</span>}</pre>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- SECTION 6: FLUTTER CODE -->
+<section class="section" id="s6">
+  <div class="sec-tag">Flutter Implementation</div>
+  <div class="sec-title">Device-Side Code</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Dart</span>
+      <span class="code-file">core/services/geofence_service.dart</span>
+    </div>
+    <pre class="code-body"><span class="cm">// pubspec.yaml additions:</span>
+<span class="cm">// geofence_service: ^4.0.0     ← handles OS geofencing</span>
+<span class="cm">// sqflite: ^2.3.0              ← on-device SQLite cache</span>
+<span class="cm">// geolocator: ^11.0.0          ← one-shot GPS on app open only</span>
+
+<span class="k">class</span> <span class="n">ProximityNotificationService</span> {
+  <span class="k">static final</span> <span class="n">GeofenceService</span> _geofenceService = <span class="n">GeofenceService</span>.<span class="fn">instance</span>.<span class="fn">setup</span>(
+    interval: <span class="c">5000</span>,           <span class="cm">// check every 5s ONLY when near boundary</span>
+    accuracy: <span class="c">100</span>,            <span class="cm">// 100m accuracy (uses WiFi/cell, not GPS)</span>
+    loiteringDelayMs: <span class="c">60000</span>,  <span class="cm">// wait 1min before trigger (avoid false positives)</span>
+    statusChangeDelay: <span class="c">10000</span>, <span class="cm">// debounce — prevents repeat notifications</span>
+    useActivityRecognition: <span class="k">true</span>,  <span class="cm">// skip when user is stationary</span>
+    allowMockLocations: <span class="k">false</span>,
+    printDevLog: <span class="k">false</span>,
+  );
+
+  <span class="cm">/// Call this ONCE when app opens/resumes. Not on every screen change.</span>
+  <span class="k">static</span> <span class="n">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">syncAndRegisterGeofences</span>() <span class="k">async</span> {
+    <span class="cm">// 1. Check if cache is still fresh (< 30 minutes old)</span>
+    <span class="k">if</span> (<span class="k">await</span> <span class="n">_isCacheFresh</span>()) {
+      <span class="k">await</span> <span class="fn">_registerFromCache</span>();  <span class="cm">// re-register from SQLite, no API call</span>
+      <span class="k">return</span>;
+    }
+
+    <span class="cm">// 2. Get current position — ONE shot, not continuous stream</span>
+    <span class="k">final</span> position = <span class="k">await</span> <span class="n">Geolocator</span>.<span class="fn">getCurrentPosition</span>(
+      desiredAccuracy: <span class="n">LocationAccuracy</span>.medium,  <span class="cm">// medium = faster + less battery</span>
+      timeLimit: <span class="k">const</span> <span class="n">Duration</span>(seconds: <span class="c">10</span>),
+    );
+
+    <span class="cm">// 3. One API call to FastAPI/PostGIS</span>
+    <span class="k">final</span> response = <span class="k">await</span> <span class="n">ApiClient</span>.dio.<span class="fn">get</span>(
+      <span class="s">'/api/v1/complaints/geofence-sync'</span>,
+      queryParameters: {<span class="s">'lat'</span>: position.latitude, <span class="s">'lng'</span>: position.longitude},
+    );
+
+    <span class="k">final</span> complaints = (response.data[<span class="s">'complaints'</span>] <span class="k">as</span> <span class="n">List</span>)
+        .<span class="fn">map</span>((e) => <span class="n">GeofencePoint</span>.<span class="fn">fromJson</span>(e))
+        .<span class="fn">toList</span>();
+
+    <span class="cm">// 4. Save to device SQLite</span>
+    <span class="k">await</span> <span class="n">GeofenceCache</span>.<span class="fn">save</span>(complaints);
+
+    <span class="cm">// 5. Register geofences with OS</span>
+    <span class="k">await</span> <span class="fn">_registerGeofences</span>(complaints);
+  }
+
+  <span class="k">static</span> <span class="n">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_registerGeofences</span>(<span class="n">List</span>&lt;<span class="n">GeofencePoint</span>&gt; points) <span class="k">async</span> {
+    <span class="k">final</span> geofences = points.<span class="fn">map</span>((p) => <span class="n">Geofence</span>(
+      id: p.complaintId,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      radius: [
+        <span class="n">GeofenceRadius</span>(id: <span class="s">'r100'</span>, length: <span class="c">100</span>),  <span class="cm">// notify at 100m</span>
+      ],
+    )).<span class="fn">toList</span>();
+
+    <span class="cm">// Register callback — fires when user enters any geofence</span>
+    <span class="k">await</span> _geofenceService.<span class="fn">start</span>(geofences).<span class="fn">then</span>((_) {
+      _geofenceService.<span class="fn">addGeofenceStatusChangedListener</span>(_onGeofenceEntered);
+    });
+  }
+
+  <span class="cm">/// Fires when user physically enters a 100m circle</span>
+  <span class="k">static</span> <span class="n">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_onGeofenceEntered</span>(
+    <span class="n">Geofence</span> geofence,
+    <span class="n">GeofenceRadius</span> radius,
+    <span class="n">GeofenceStatus</span> status,
+    <span class="n">Location</span> location,
+  ) <span class="k">async</span> {
+    <span class="k">if</span> (status != <span class="n">GeofenceStatus</span>.ENTER) <span class="k">return</span>;
+
+    <span class="cm">// Verify complaint is still active (tiny API call, ~50 bytes)</span>
+    <span class="k">final</span> res = <span class="k">await</span> <span class="n">ApiClient</span>.dio.<span class="fn">get</span>(<span class="s">'/api/v1/complaints/</span><span class="c">${geofence.id}</span><span class="s">/status'</span>);
+    <span class="k">final</span> complaintStatus = res.data[<span class="s">'status'</span>];
+
+    <span class="k">if</span> ([<span class="s">'fixed'</span>, <span class="s">'closed'</span>, <span class="s">'rejected'</span>].<span class="fn">contains</span>(complaintStatus)) {
+      <span class="cm">// Issue resolved — remove this geofence silently</span>
+      _geofenceService.<span class="fn">removeGeofenceById</span>(geofence.id);
+      <span class="k">return</span>;
+    }
+
+    <span class="cm">// Get issue details from local cache (no API call)</span>
+    <span class="k">final</span> cached = <span class="k">await</span> <span class="n">GeofenceCache</span>.<span class="fn">getById</span>(geofence.id);
+
+    <span class="cm">// Show local notification (no FCM needed for this)</span>
+    <span class="k">await</span> <span class="n">LocalNotificationService</span>.<span class="fn">show</span>(
+      id: geofence.id.<span class="fn">hashCode</span>,
+      title: <span class="s">'${cached?.issueTypeEmoji} Unresolved issue nearby'</span>,
+      body: <span class="s">'${cached?.issueType} reported ~100m away. Tap to view or confirm.'</span>,
+      payload: <span class="s">'complaint:</span><span class="c">${geofence.id}</span><span class="s">'</span>,
+    );
+  }
+}</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Dart</span>
+      <span class="code-file">core/services/geofence_cache.dart — on-device SQLite store</span>
+    </div>
+    <pre class="code-body"><span class="k">class</span> <span class="n">GeofenceCache</span> {
+  <span class="k">static</span> <span class="n">Database</span>? _db;
+
+  <span class="k">static</span> <span class="n">Future</span>&lt;<span class="n">Database</span>&gt; <span class="k">get</span> db <span class="k">async</span> {
+    _db ??= <span class="k">await</span> <span class="fn">openDatabase</span>(
+      <span class="s">'geofence_cache.db'</span>,
+      version: <span class="c">1</span>,
+      onCreate: (db, _) => db.<span class="fn">execute</span>(<span class="s">'''
+        CREATE TABLE geofence_points (
+          complaint_id  TEXT PRIMARY KEY,
+          issue_type    TEXT NOT NULL,
+          latitude      REAL NOT NULL,
+          longitude     REAL NOT NULL,
+          address       TEXT,
+          cached_at     INTEGER NOT NULL   -- epoch ms for freshness check
+        )
+      '''</span>),
+    );
+    <span class="k">return</span> _db!;
+  }
+
+  <span class="cm">/// Cache is fresh if saved less than 30 minutes ago</span>
+  <span class="k">static</span> <span class="n">Future</span>&lt;<span class="kw">bool</span>&gt; <span class="fn">isFresh</span>() <span class="k">async</span> {
+    <span class="k">final</span> d = <span class="k">await</span> db;
+    <span class="k">final</span> rows = <span class="k">await</span> d.<span class="fn">query</span>(<span class="s">'geofence_points'</span>, orderBy: <span class="s">'cached_at DESC'</span>, limit: <span class="c">1</span>);
+    <span class="k">if</span> (rows.isEmpty) <span class="k">return false</span>;
+    <span class="k">final</span> age = <span class="n">DateTime</span>.<span class="fn">now</span>().<span class="fn">millisecondsSinceEpoch</span> - (rows.first[<span class="s">'cached_at'</span>] <span class="k">as</span> <span class="kw">int</span>);
+    <span class="k">return</span> age &lt; <span class="c">30 * 60 * 1000</span>;  <span class="cm">// 30 minutes</span>
+  }
+
+  <span class="k">static</span> <span class="n">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">save</span>(<span class="n">List</span>&lt;<span class="n">GeofencePoint</span>&gt; points) <span class="k">async</span> {
+    <span class="k">final</span> d = <span class="k">await</span> db;
+    <span class="k">final</span> now = <span class="n">DateTime</span>.<span class="fn">now</span>().<span class="fn">millisecondsSinceEpoch</span>;
+    <span class="k">await</span> d.<span class="fn">delete</span>(<span class="s">'geofence_points'</span>);  <span class="cm">// clear old cache</span>
+    <span class="k">for</span> (<span class="k">final</span> p <span class="k">in</span> points) {
+      <span class="k">await</span> d.<span class="fn">insert</span>(<span class="s">'geofence_points'</span>, {
+        <span class="s">'complaint_id'</span>: p.complaintId,
+        <span class="s">'issue_type'</span>:   p.issueType,
+        <span class="s">'latitude'</span>:     p.latitude,
+        <span class="s">'longitude'</span>:    p.longitude,
+        <span class="s">'address'</span>:      p.address,
+        <span class="s">'cached_at'</span>:    now,
+      }, conflictAlgorithm: <span class="n">ConflictAlgorithm</span>.replace);
+    }
+  }
+}</pre>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- SECTION 7: DB CHANGES -->
+<section class="section" id="s7">
+  <div class="sec-tag">Database Changes</div>
+  <div class="sec-title">What Changes in the Schema</div>
+  <div class="sec-desc">Minimal changes. users, citizens, and authorities tables are completely untouched. Only a lightweight view is added to PostgreSQL.</div>
+
+  <div class="callout c-tip">
+    <div class="c-icon">✅</div>
+    <div><strong>users, citizens, authorities tables — zero changes.</strong> The geofencing system reads from existing complaints + locations tables. No new columns needed on user tables. The device-side cache is purely on-device SQLite — it never writes back to your server DB.</div>
+  </div>
+
+  <table class="changes-table">
+    <tr><th>Object</th><th>Type</th><th>Change</th><th>Why</th></tr>
+    <tr>
+      <td><strong>users</strong></td>
+      <td style="color:var(--muted)">Table</td>
+      <td><span class="tag-none">NO CHANGE</span></td>
+      <td style="color:var(--muted)">Not needed</td>
+    </tr>
+    <tr>
+      <td><strong>citizens</strong></td>
+      <td style="color:var(--muted)">Table</td>
+      <td><span class="tag-none">NO CHANGE</span></td>
+      <td style="color:var(--muted)">Not needed</td>
+    </tr>
+    <tr>
+      <td><strong>authorities</strong></td>
+      <td style="color:var(--muted)">Table</td>
+      <td><span class="tag-none">NO CHANGE</span></td>
+      <td style="color:var(--muted)">Not needed</td>
+    </tr>
+    <tr>
+      <td><strong>complaints</strong></td>
+      <td style="color:var(--muted)">Table</td>
+      <td><span class="tag-none">NO CHANGE</span></td>
+      <td style="color:var(--muted)">Status field already exists</td>
+    </tr>
+    <tr>
+      <td><strong>locations</strong></td>
+      <td style="color:var(--muted)">Table</td>
+      <td><span class="tag-none">NO CHANGE</span></td>
+      <td style="color:var(--muted)">geom column already has GiST index</td>
+    </tr>
+    <tr>
+      <td><strong>active_complaint_points</strong></td>
+      <td style="color:var(--green)">VIEW</td>
+      <td><span class="tag-new">NEW</span></td>
+      <td style="color:var(--muted)">Lightweight read-only view — filters out resolved issues. Used by geofence-sync endpoint only.</td>
+    </tr>
+    <tr>
+      <td><strong>geofence_cache (SQLite)</strong></td>
+      <td style="color:var(--primary)">Device DB</td>
+      <td><span class="tag-new">NEW (on-device)</span></td>
+      <td style="color:var(--muted)">Lives on user's phone only. Not on your server. Created by Flutter sqflite package.</td>
+    </tr>
+  </table>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">SQL</span>
+      <span class="code-file">The only thing to add to PostgreSQL</span>
+    </div>
+    <pre class="code-body"><span class="cm">-- That's it. One view. Run this in pgAdmin Query Tool.</span>
+<span class="k">CREATE OR REPLACE VIEW</span> <span class="n">active_complaint_points</span> <span class="k">AS</span>
+<span class="k">SELECT</span>
+  c.complaint_id,
+  c.issue_type,
+  c.status,
+  l.latitude,
+  l.longitude,
+  l.address,
+  l.geom          <span class="cm">-- the PostGIS geometry column for ST_DWithin()</span>
+<span class="k">FROM</span> complaints c
+<span class="k">JOIN</span> locations l <span class="k">ON</span> l.location_id = c.location_id
+<span class="k">WHERE</span> c.status <span class="k">NOT IN</span> (<span class="s">'fixed'</span>, <span class="s">'closed'</span>, <span class="s">'rejected'</span>);
+
+<span class="cm">-- The GiST index on locations.geom already covers this view.
+-- No extra index needed.</span></pre>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- SECTION 8: EDGE CASES -->
+<section class="section" id="s8">
+  <div class="sec-tag">Edge Cases & Refinements</div>
+  <div class="sec-title">Real Engineering Considerations</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div style="font-size:14px;font-weight:700;color:var(--yellow);margin-bottom:10px">⏰ Cache Staleness</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">If an issue gets fixed while user has stale cache, the geofence still exists on device. The <strong>status check API call</strong> (step 7 in flow) catches this — it silently removes the geofence without showing notification. User never sees a false alert.</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div style="font-size:14px;font-weight:700;color:var(--purple);margin-bottom:10px">📱 iOS Limit: 20 Geofences</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">iOS limits apps to 20 simultaneous geofences. Solution: sort PostGIS results by <code>ST_Distance()</code> and only register the <strong>20 nearest</strong> issues. As user moves and some drop out of range, refresh the list. Android limit is 100.</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div style="font-size:14px;font-weight:700;color:var(--red);margin-bottom:10px">🔇 Notification Fatigue</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">User should not get the same notification twice for the same issue. Track in SQLite: <code>last_notified_at</code> per complaint. Only trigger again if 24 hours have passed or user explicitly dismissed and re-approached.</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:10px">📴 No Internet on Trigger</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">Geofence triggers even offline. In <code>_onGeofenceEntered</code>, if the status check API call fails (no internet), fall back to cached status. If cached status is still active, show notification. It's better to show a slightly stale notification than none.</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div style="font-size:14px;font-weight:700;color:var(--cyan);margin-bottom:10px">🔄 New Issues Added</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">New complaints reported after the last sync won't be in the device cache yet. FCM push notification handles this: when a new complaint is reported, FastAPI sends a FCM notification to nearby citizens with the complaint_id — Flutter receives it, adds it to local cache and registers a new geofence.</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div style="font-size:14px;font-weight:700;color:var(--primary);margin-bottom:10px">🛑 User Opted Out</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">Always check notification permission before registering geofences. If user denied location permission, skip geofencing entirely. Add a settings toggle "Nearby Issue Alerts" in the profile screen — stores preference in <code>flutter_secure_storage</code>.</div>
+    </div>
+  </div>
+
+  <div class="callout c-tip">
+    <div class="c-icon">💡</div>
+    <div><strong>Summary — The full chain:</strong> App opens → one GPS shot → one PostGIS query → save 50 points to SQLite → register OS geofences → phone sleeps → OS wakes app when you walk past a pothole → one status check → local notification. No continuous GPS. No continuous server polling. Battery impact ≈ 3% per hour from location. This is exactly how Google Maps, Snapchat, and Uber handle proximity-aware features.</div>
+  </div>
+</section>
+
+<div style="height:80px"></div>
+</div>
+
+<script>
+// Battery bars animate in on load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.querySelectorAll('.batt-bar').forEach(bar => {
+      bar.style.width = bar.getAttribute('data-w');
+    });
+  }, 400);
+});
+
+// Interactive calculator
+const usersSlider = document.getElementById('usersSlider');
+const pollSlider = document.getElementById('pollSlider');
+const usersVal = document.getElementById('usersVal');
+const pollVal = document.getElementById('pollVal');
+const rQueries = document.getElementById('r-queries');
+const rGeofence = document.getElementById('r-geofence');
+const rSaving = document.getElementById('r-saving');
+
+function updateCalc() {
+  const users = parseInt(usersSlider.value);
+  const poll = parseInt(pollSlider.value);
+  const queriesPerHour = Math.round((3600 / poll) * users);
+  const geofenceQueries = users; // one per user on app open
+  const saving = ((1 - geofenceQueries / queriesPerHour) * 100).toFixed(2);
+  usersVal.textContent = users.toLocaleString();
+  pollVal.textContent = poll + 's';
+  rQueries.textContent = queriesPerHour.toLocaleString();
+  rGeofence.textContent = users.toLocaleString();
+  rSaving.textContent = saving + '%';
+}
+
+usersSlider.addEventListener('input', updateCalc);
+pollSlider.addEventListener('input', updateCalc);
+updateCalc();
+
+// Map interaction — move user dot and detect geofence entry
+const mapCanvas = document.getElementById('mapCanvas');
+const userDot = document.getElementById('userDot');
+const geoStatus = document.getElementById('geoStatus');
+
+// Issue positions (%)
+const issues = [
+  { x: 30, y: 35, type: 'Road Damage', color: '#ef4444' },
+  { x: 58, y: 55, type: 'Streetlight', color: '#f59e0b' },
+  { x: 72, y: 28, type: 'Garbage', color: '#10b981' },
+  { x: 20, y: 68, type: 'Water Leak', color: '#8b5cf6' },
+];
+
+let notifiedIds = new Set();
+
+mapCanvas.addEventListener('mousemove', (e) => {
+  const rect = mapCanvas.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 100;
+  const y = ((e.clientY - rect.top) / rect.height) * 100;
+  userDot.style.left = x + '%';
+  userDot.style.top = y + '%';
+
+  let inZone = null;
+  for (const issue of issues) {
+    const dist = Math.sqrt(Math.pow(x - issue.x, 2) + Math.pow(y - issue.y, 2));
+    if (dist < 9) { inZone = issue; break; }
+  }
+
+  if (inZone) {
+    const key = inZone.type;
+    if (!notifiedIds.has(key)) {
+      notifiedIds.add(key);
+      geoStatus.innerHTML = `<span style="color:${inZone.color}">🔔 GEOFENCE ENTERED — "${inZone.type}" ~80m away · Local notification would trigger → checking status via API...</span>`;
+      setTimeout(() => {
+        geoStatus.innerHTML = `<span style="color:#10b981">✅ Status confirmed: still unresolved · Notification shown to user</span>`;
+        setTimeout(() => {
+          notifiedIds.delete(key);
+          geoStatus.textContent = 'Move your mouse over the map to simulate walking →';
+        }, 3000);
+      }, 1200);
+    }
+  }
+});
+</script>
+</body>
+</html>

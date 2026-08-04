@@ -1,5 +1,8 @@
 import 'dart:convert';
+<<<<<<< HEAD
 import 'dart:typed_data';
+=======
+>>>>>>> origin/main
 
 import 'package:http/http.dart' as http;
 import 'package:urbancare_frontend/core/utils/token_storage.dart';
@@ -40,6 +43,7 @@ class ApiClient {
     return _decodeMapResponse(response);
   }
 
+<<<<<<< HEAD
   Future<Map<String, dynamic>> putJson(
     String path, {
     Map<String, dynamic>? body,
@@ -58,6 +62,8 @@ class ApiClient {
     return _decodeMapResponse(response);
   }
 
+=======
+>>>>>>> origin/main
   Future<List<dynamic>> getList(
     String path, {
     bool authRequired = false,
@@ -86,6 +92,7 @@ class ApiClient {
     );
   }
 
+<<<<<<< HEAD
   Future<Map<String, dynamic>> postMultipart(
     String path, {
     required String fieldName,
@@ -115,6 +122,8 @@ class ApiClient {
     return _decodeMapResponse(response);
   }
 
+=======
+>>>>>>> origin/main
   Uri _buildUri(String path, {Map<String, String>? queryParams}) {
     final uri = Uri.parse('$baseUrl$path');
     if (queryParams == null || queryParams.isEmpty) {

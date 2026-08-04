@@ -6,9 +6,12 @@ class TokenStorage {
   static const _nameKey = 'uc_name';
   static const _emailKey = 'uc_email';
   static const _roleKey = 'uc_role';
+<<<<<<< HEAD
   static const _phoneKey = 'uc_phone';
   static const _themeModeKey = 'uc_theme_mode';
   static const _notificationEnabledKey = 'uc_notifications_enabled';
+=======
+>>>>>>> origin/main
 
   static const _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -39,6 +42,7 @@ class TokenStorage {
       'name': await _storage.read(key: _nameKey),
       'email': await _storage.read(key: _emailKey),
       'role': await _storage.read(key: _roleKey),
+<<<<<<< HEAD
       'phone': await _storage.read(key: _phoneKey),
     };
   }
@@ -75,12 +79,20 @@ class TokenStorage {
     return value == 'true';
   }
 
+=======
+    };
+  }
+
+>>>>>>> origin/main
   Future<void> clearSession() async {
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _userIdKey);
     await _storage.delete(key: _nameKey);
     await _storage.delete(key: _emailKey);
     await _storage.delete(key: _roleKey);
+<<<<<<< HEAD
     await _storage.delete(key: _phoneKey);
+=======
+>>>>>>> origin/main
   }
 }

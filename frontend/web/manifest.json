@@ -3,8 +3,13 @@
     "short_name": "urbancare_frontend",
     "start_url": ".",
     "display": "standalone",
+<<<<<<< HEAD
     "background_color": "#ffffff",
     "theme_color": "#ffffff",
+=======
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+>>>>>>> origin/main
     "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
@@ -32,4 +37,8 @@
             "purpose": "maskable"
         }
     ]
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main
